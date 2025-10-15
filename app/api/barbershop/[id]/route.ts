@@ -1,6 +1,4 @@
 import { db } from "@/app/_lib/prisma";
-import fs from "fs";
-import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 
 export const config = {
@@ -22,25 +20,33 @@ export async function PUT(req: NextRequest) {
     const phones = JSON.parse(formData.get("phones")?.toString() || "[]");
     const description = formData.get("description")?.toString() || "";
 
-    let imageUrl = "";
+    let imageUrl = undefined; // undefined para não sobrescrever se não houver nova imagem
     const imageFile = formData.get("image") as File | null;
+
     if (imageFile) {
       const arrayBuffer = await imageFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      const uploadDir = path.join(process.cwd(), "public/uploads");
-      fs.mkdirSync(uploadDir, { recursive: true });
+      // Converte para Base64
+      const base64 = buffer.toString("base64");
 
-      const fileName = `${Date.now()}-${imageFile.name}`;
-      const uploadPath = path.join(uploadDir, fileName);
-      fs.writeFileSync(uploadPath, buffer);
+      // Detecta o tipo MIME da imagem (ex: image/png, image/jpeg)
+      const mimeType = imageFile.type || "image/jpeg";
 
-      imageUrl = `/uploads/${fileName}`;
+      // Salva no formato data URL
+      imageUrl = `data:${mimeType};base64,${base64}`;
     }
 
+    // Atualiza apenas os campos fornecidos
     const updated = await db.barbershop.update({
       where: { id },
-      data: { name, address, phones, description, ...(imageUrl ? { imageUrl } : {}) },
+      data: {
+        name,
+        address,
+        phones,
+        description,
+        ...(imageUrl ? { imageUrl } : {}), // só atualiza a imagem se tiver sido enviada
+      },
     });
 
     return NextResponse.json(updated);
