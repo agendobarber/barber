@@ -12,6 +12,8 @@ import Search from "./_components/search";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./_lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
 
   const barbershops = await db.barbershop.findMany({});
