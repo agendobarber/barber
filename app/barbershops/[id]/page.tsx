@@ -45,10 +45,10 @@ const BarbershopPage = async ({
     ...barbershop,
     services: barbershop.services.map(
       (s) =>
-        ({
-          ...s,
-          price: Number(s.price),
-        } as SanitizedService)
+      ({
+        ...s,
+        price: Number(s.price),
+      } as SanitizedService)
     ),
   };
 
@@ -102,11 +102,11 @@ const BarbershopPage = async ({
 
       {/* SERVIÇOS */}
       <div className="space-y-3 p-5">
-        <h2 className="text-xs font-bold uppercase text-gray-400 mb-3">
+        {/*<h2 className="text-xs font-bold uppercase text-gray-400 mb-3">
           Serviços
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {sanitizedBarbershop.services.map((service) => (
             <ServiceItem
               key={service.id}
@@ -115,7 +115,7 @@ const BarbershopPage = async ({
             />
           ))}
         </div>
-
+           */}
         {/* Botão de reserva */}
         <div className="mt-6">
           <BookingButton barbershop={sanitizedBarbershop as any} />
