@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         let prismaPrice;
         try {
             prismaPrice = new Prisma.Decimal(price);
-        } catch (e) {
+        } catch {
             return NextResponse.json({ error: "price inválido" }, { status: 400 });
         }
 
