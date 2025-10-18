@@ -142,12 +142,12 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
 
   const total = useMemo(
     () => barbershop.services.filter(s => selectedServices.includes(s.id)).reduce((acc, s) => acc + Number(s.price), 0),
-    [selectedServices]
+    [selectedServices, barbershop.services]
   );
 
   const totalTempo = useMemo(
     () => barbershop.services.filter(s => selectedServices.includes(s.id)).reduce((acc, s) => acc + (s.tempo || 0), 0),
-    [selectedServices]
+    [selectedServices, barbershop.services]
   );
 
   const roundedSlots = Math.ceil(totalTempo / 30);
