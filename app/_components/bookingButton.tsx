@@ -1,20 +1,29 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
 import { Barbershop, BarbershopService, Professional, Booking } from "@prisma/client";
 import { Button } from "./ui/button";
-import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Card, CardContent } from "./ui/card";
-import { Calendar } from "./ui/calendar";
 import { ptBR } from "date-fns/locale";
 import { setHours, setMinutes, isPast, isToday } from "date-fns";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { createBooking } from "../_actions/create-booking";
 import { getBookings } from "../_actions/get-bookings";
-import { Dialog, DialogContent } from "./ui/dialog";
-import SignInDialog from "./sign-in-dialog";
 import { useRouter } from "next/navigation";
+
+// Lazy-load dos componentes pesados
+const Calendar = dynamic(() => import("./ui/calendar").then(mod => mod.Calendar), { ssr: false });
+const SignInDialog = dynamic(() => import("./sign-in-dialog"), { ssr: false });
+const Sheet = dynamic(() => import("./ui/sheet").then(mod => mod.Sheet), { ssr: false });
+const SheetHeader = dynamic(() => import("./ui/sheet").then(mod => mod.SheetHeader), { ssr: false });
+const SheetTitle = dynamic(() => import("./ui/sheet").then(mod => mod.SheetTitle), { ssr: false });
+const SheetContent = dynamic(() => import("./ui/sheet").then(mod => mod.SheetContent), { ssr: false });
+const SheetFooter = dynamic(() => import("./ui/sheet").then(mod => mod.SheetFooter), { ssr: false });
+const SheetClose = dynamic(() => import("./ui/sheet").then(mod => mod.SheetClose), { ssr: false });
+const Dialog = dynamic(() => import("./ui/dialog").then(mod => mod.Dialog), { ssr: false });
+const DialogContent = dynamic(() => import("./ui/dialog").then(mod => mod.DialogContent), { ssr: false });
 
 interface BookingButtonProps {
   barbershop: Barbershop & {

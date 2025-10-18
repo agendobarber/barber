@@ -1,5 +1,4 @@
 // app/barbershops/[id]/page.tsx
-
 import BookingButton from "@/app/_components/bookingButton";
 import PhoneItem from "@/app/_components/phone-item";
 import SidebarSheet from "@/app/_components/sidebar-sheets";
@@ -11,7 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-// 🔹 Tipo limpo para serviços (Prisma.Decimal convertido para number)
+// 🔹 Tipagem limpa para serviços (Decimal -> number)
 interface SanitizedService {
   id: string;
   name: string;
@@ -22,34 +21,41 @@ interface SanitizedService {
   status: number;
 }
 
+// 🔹 Tipagem do barbershop sanitizado
+interface SanitizedBarbershop {
+  id: string;
+  name: string;
+  address: string;
+  description: string;
+  imageUrl: string;
+  services: SanitizedService[];
+  professionals: { id: string; name: string; status: number }[];
+  phones?: string[];
+}
+
 // 🔹 Força esta página a ser dynamic (SSR)
 export const dynamic = "force-dynamic";
 
-const BarbershopPage = async ({
-  params,
-}: {
-  params: Promise<{ id: string }>; // 🔹 Next 15 params é Promise
-}) => {
-  // 🔹 Espera a Promise resolver antes de usar
+const BarbershopPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
 
-  // Buscar barbearia + serviços + profissionais
+  // Buscar barbearia com serviços e profissionais
   const barbershop = await db.barbershop.findUnique({
     where: { id },
-    include: { services: true, professionals: true },
+    include: {
+      services: true,
+      professionals: true,
+      // phones é campo normal, não include
+    },
   });
 
   if (!barbershop) return notFound();
 
   // Sanitizar serviços (Decimal -> number)
-  const sanitizedBarbershop = {
+  const sanitizedBarbershop: SanitizedBarbershop = {
     ...barbershop,
     services: barbershop.services.map(
-      (s) =>
-        ({
-          ...s,
-          price: Number(s.price),
-        } as SanitizedService)
+      (s) => ({ ...s, price: Number(s.price) } as SanitizedService)
     ),
   };
 
@@ -108,13 +114,14 @@ const BarbershopPage = async ({
       </div>
 
       {/* TELEFONES */}
-      {sanitizedBarbershop.phones?.length > 0 && (
+      {(sanitizedBarbershop.phones ?? []).length > 0 && (
         <div className="p-5 space-y-2">
-          {sanitizedBarbershop.phones.map((phone) => (
+          {(sanitizedBarbershop.phones ?? []).map((phone) => (
             <PhoneItem key={phone} phone={phone} />
           ))}
         </div>
       )}
+
     </div>
   );
 };
