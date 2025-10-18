@@ -1,9 +1,11 @@
 import { db } from "@/app/_lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const params = await context.params; // 👈 aguarda o params (resolve erro em dev e funciona em prod)
     const professionalId = params.id;
+
     if (!professionalId) {
       return NextResponse.json({ error: "ID do profissional não fornecido" }, { status: 400 });
     }
