@@ -1,4 +1,5 @@
 // app/barbershops/[id]/page.tsx
+
 import BookingButton from "@/app/_components/bookingButton";
 import PhoneItem from "@/app/_components/phone-item";
 import SidebarSheet from "@/app/_components/sidebar-sheets";
@@ -24,20 +25,18 @@ interface SanitizedService {
 // 🔹 Força esta página a ser dynamic (SSR)
 export const dynamic = "force-dynamic";
 
-interface PageProps {
-  params: { id: string }; // Server Component: params direto
-}
-
-const BarbershopPage = async ({ params }: PageProps) => {
-  const { id } = params; // ✅ sem await
+const BarbershopPage = async ({
+  params,
+}: {
+  params: Promise<{ id: string }>; // 🔹 Next 15 params é Promise
+}) => {
+  // 🔹 Espera a Promise resolver antes de usar
+  const { id } = await params;
 
   // Buscar barbearia + serviços + profissionais
   const barbershop = await db.barbershop.findUnique({
     where: { id },
-    include: {
-      services: true,
-      professionals: true,
-    },
+    include: { services: true, professionals: true },
   });
 
   if (!barbershop) return notFound();
@@ -68,12 +67,7 @@ const BarbershopPage = async ({ params }: PageProps) => {
         />
 
         {/* Voltar */}
-        <Button
-          size="icon"
-          variant="secondary"
-          className="absolute left-4 top-4"
-          asChild
-        >
+        <Button size="icon" variant="secondary" className="absolute left-4 top-4" asChild>
           <Link href="/">
             <ChevronLeftIcon />
           </Link>
