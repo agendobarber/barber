@@ -1,3 +1,4 @@
+// app/barbershops/[id]/page.tsx
 import BookingButton from "@/app/_components/bookingButton";
 import PhoneItem from "@/app/_components/phone-item";
 import SidebarSheet from "@/app/_components/sidebar-sheets";
@@ -9,6 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+// 🔹 Tipo limpo para serviços (Prisma.Decimal convertido para number)
 interface SanitizedService {
   id: string;
   name: string;
@@ -19,11 +21,17 @@ interface SanitizedService {
   status: number;
 }
 
+// 🔹 Força esta página a ser dynamic (SSR)
 export const dynamic = "force-dynamic";
 
-const BarbershopPage = async ({ params }: { params: { id: string } }) => {
-  const { id } = await params;
+interface PageProps {
+  params: { id: string }; // Server Component: params direto
+}
 
+const BarbershopPage = async ({ params }: PageProps) => {
+  const { id } = params; // ✅ sem await
+
+  // Buscar barbearia + serviços + profissionais
   const barbershop = await db.barbershop.findUnique({
     where: { id },
     include: {
@@ -34,6 +42,7 @@ const BarbershopPage = async ({ params }: { params: { id: string } }) => {
 
   if (!barbershop) return notFound();
 
+  // Sanitizar serviços (Decimal -> number)
   const sanitizedBarbershop = {
     ...barbershop,
     services: barbershop.services.map(
@@ -55,10 +64,16 @@ const BarbershopPage = async ({ params }: { params: { id: string } }) => {
           alt={sanitizedBarbershop.name}
           className="object-cover"
           priority
+          sizes="100vw"
         />
 
         {/* Voltar */}
-        <Button size="icon" variant="secondary" className="absolute left-4 top-4" asChild>
+        <Button
+          size="icon"
+          variant="secondary"
+          className="absolute left-4 top-4"
+          asChild
+        >
           <Link href="/">
             <ChevronLeftIcon />
           </Link>
@@ -75,7 +90,7 @@ const BarbershopPage = async ({ params }: { params: { id: string } }) => {
         </Sheet>
       </div>
 
-      {/* INFO PRINCIPAL */}
+      {/* INFORMAÇÕES PRINCIPAIS */}
       <div className="p-5 flex flex-col gap-1 border-b border-solid">
         <h1 className="text-2xl font-bold">{sanitizedBarbershop.name}</h1>
         <div className="flex items-center gap-2">
