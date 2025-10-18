@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Barbershop, BarbershopService, Professional, Booking } from "@prisma/client";
 import { Button } from "./ui/button";
 import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "./ui/sheet";
@@ -23,7 +23,6 @@ interface BookingButtonProps {
   };
 }
 
-// Gera horários do profissional conforme início e fim do dia
 const generateProfessionalTimeSlots = (
   schedules: { dayOfWeek: number; startTime: string; endTime: string }[],
   selectedDay: Date
@@ -40,10 +39,8 @@ const generateProfessionalTimeSlots = (
       const endTime = setHours(setMinutes(new Date(selectedDay), endMin), endHour);
 
       while (current < endTime) {
-        slots.push(
-          `${String(current.getHours()).padStart(2, "0")}:${String(current.getMinutes()).padStart(2, "0")}`
-        );
-        current = new Date(current.getTime() + 30 * 60000); // incrementa 30 min
+        slots.push(`${String(current.getHours()).padStart(2, "0")}:${String(current.getMinutes()).padStart(2, "0")}`);
+        current = new Date(current.getTime() + 30 * 60000);
       }
     }
   });
@@ -51,7 +48,6 @@ const generateProfessionalTimeSlots = (
   return slots;
 };
 
-// Função que verifica status de cada horário
 const getTimeStatusList = ({
   professionalSchedules,
   bookings,
@@ -68,7 +64,6 @@ const getTimeStatusList = ({
     const current = setHours(setMinutes(new Date(selectedDay), minute), hour);
 
     const timeInPast = isPast(current) && isToday(selectedDay);
-
     const isBooked = bookings.some((b) => {
       const start = new Date(b.date);
       const end = new Date(b.endDate);
@@ -93,10 +88,10 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
   const [dayBookings, setDayBookings] = useState<Booking[]>([]);
   const [professionalSchedules, setProfessionalSchedules] = useState<{ dayOfWeek: number; startTime: string; endTime: string }[]>([]);
 
+  const bookingsCache = useRef<{ [key: string]: Booking[] }>({});
+
   const toggleService = (id: string) => {
-    setSelectedServices((prev) =>
-      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
-    );
+    setSelectedServices((prev) => prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]);
   };
 
   const selectProfessional = async (id: string) => {
@@ -105,32 +100,39 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
     setSelectedProfessional(id);
     setSelectedTimes([]);
 
-    // Pega horários do profissional via API
     try {
       const res = await fetch(`/api/professionals/${id}/schedules`);
       const schedules = await res.json();
       setProfessionalSchedules(schedules || []);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setProfessionalSchedules([]);
     }
 
     if (!selectedDay) return setDayBookings([]);
 
-    // Pega bookings do dia
-    const bookings = await getBookings({ date: selectedDay, professionalId: id });
-    setDayBookings(bookings);
+    const cacheKey = `${id}_${selectedDay.toDateString()}`;
+    if (bookingsCache.current[cacheKey]) {
+      setDayBookings(bookingsCache.current[cacheKey]);
+    } else {
+      const bookings = await getBookings({ date: selectedDay, professionalId: id });
+      bookingsCache.current[cacheKey] = bookings;
+      setDayBookings(bookings);
+    }
   };
 
   useEffect(() => {
-    if (!selectedDay || !selectedProfessional) {
-      setDayBookings([]);
+    if (!selectedDay || !selectedProfessional) return setDayBookings([]);
+
+    const cacheKey = `${selectedProfessional}_${selectedDay.toDateString()}`;
+    if (bookingsCache.current[cacheKey]) {
+      setDayBookings(bookingsCache.current[cacheKey]);
       return;
     }
 
     let mounted = true;
     const fetchBookings = async () => {
       const bookings = await getBookings({ date: selectedDay, professionalId: selectedProfessional });
+      bookingsCache.current[cacheKey] = bookings;
       if (mounted) setDayBookings(bookings);
     };
     fetchBookings();
@@ -138,13 +140,15 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
     return () => { mounted = false; };
   }, [selectedDay, selectedProfessional]);
 
-  const total = barbershop.services
-    .filter((s) => selectedServices.includes(s.id))
-    .reduce((acc, s) => acc + Number(s.price), 0);
+  const total = useMemo(
+    () => barbershop.services.filter(s => selectedServices.includes(s.id)).reduce((acc, s) => acc + Number(s.price), 0),
+    [selectedServices]
+  );
 
-  const totalTempo = barbershop.services
-    .filter((s) => selectedServices.includes(s.id))
-    .reduce((acc, s) => acc + (s.tempo || 0), 0);
+  const totalTempo = useMemo(
+    () => barbershop.services.filter(s => selectedServices.includes(s.id)).reduce((acc, s) => acc + (s.tempo || 0), 0),
+    [selectedServices]
+  );
 
   const roundedSlots = Math.ceil(totalTempo / 30);
 
@@ -155,43 +159,31 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
 
   const handleTimeClick = (time: string) => {
     if (!selectedDay || !selectedProfessional || selectedServices.length === 0) {
-      toast.error("Selecione serviço, barbeiro e dia antes de escolher o horário.");
-      return;
+      return toast.error("Selecione serviço, barbeiro e dia antes de escolher o horário.");
     }
 
     const statusList = getTimeStatusList({ bookings: dayBookings, selectedDay, professionalSchedules });
     const clicked = statusList.find((s) => s.time === time);
-    if (!clicked || clicked.disabled) {
-      toast.error("Horário indisponível. Escolha outro horário.");
-      return;
-    }
+    if (!clicked || clicked.disabled) return toast.error("Horário indisponível.");
 
-    const availableTimes = statusList.filter((t) => !t.disabled).map((t) => t.time);
+    const availableTimes = statusList.filter(t => !t.disabled).map(t => t.time);
     const startIndex = availableTimes.indexOf(time);
     const timesToSelect = availableTimes.slice(startIndex, startIndex + roundedSlots);
-    if (timesToSelect.length < roundedSlots) {
-      toast.error("Não há horários suficientes disponíveis para o tempo total dos serviços.");
-      return;
-    }
+    if (timesToSelect.length < roundedSlots) return toast.error("Não há horários suficientes disponíveis.");
 
     setSelectedTimes(timesToSelect);
   };
 
   const handleConfirm = async () => {
     if (!selectedDay || selectedTimes.length === 0 || selectedServices.length === 0 || !selectedProfessional) {
-      toast.error("Selecione todos os campos obrigatórios.");
-      return;
+      return toast.error("Selecione todos os campos obrigatórios.");
     }
 
     try {
       const [hour, minute] = selectedTimes[0].split(":").map(Number);
       const bookingDate = setHours(setMinutes(selectedDay, minute), hour);
 
-      await createBooking({
-        serviceIds: selectedServices,
-        date: bookingDate,
-        professionalId: selectedProfessional,
-      });
+      await createBooking({ serviceIds: selectedServices, date: bookingDate, professionalId: selectedProfessional });
 
       toast.success("💈 Reserva criada com sucesso!");
       setSheetOpen(false);
@@ -201,7 +193,6 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
       setSelectedProfessional(null);
       setDayBookings([]);
       setProfessionalSchedules([]);
-
       router.push(`/`);
     } catch (err) {
       console.error(err);
@@ -209,9 +200,9 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
     }
   };
 
-  const statusList = selectedDay
-    ? getTimeStatusList({ bookings: dayBookings, selectedDay, professionalSchedules })
-    : [];
+  const statusList = useMemo(() => {
+    return selectedDay ? getTimeStatusList({ bookings: dayBookings, selectedDay, professionalSchedules }) : [];
+  }, [selectedDay, dayBookings, professionalSchedules]);
 
   return (
     <>
@@ -222,10 +213,9 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
           <SheetHeader><SheetTitle>Agendar horário</SheetTitle></SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-1 space-y-3">
-            {/* Serviços */}
             <div>
               <h3 className="font-semibold text-sm mb-2">Escolha os serviços</h3>
-              {barbershop.services.map((service) => (
+              {barbershop.services.map(service => (
                 <Card key={service.id}>
                   <CardContent className="flex justify-between items-center p-2 h-12">
                     <div>
@@ -246,28 +236,24 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
               ))}
             </div>
 
-            {/* Profissional */}
             {selectedServices.length > 0 && (
               <div>
                 <h3 className="font-semibold text-sm mb-2">Escolha o barbeiro</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {barbershop.professionals
-                    .filter((p) => p.status === 1)
-                    .map((prof) => (
-                      <Button
-                        key={prof.id}
-                        variant={selectedProfessional === prof.id ? "default" : "outline"}
-                        onClick={() => selectProfessional(prof.id)}
-                        className="text-xs"
-                      >
-                        {prof.name}
-                      </Button>
-                    ))}
+                  {barbershop.professionals.filter(p => p.status === 1).map(prof => (
+                    <Button
+                      key={prof.id}
+                      variant={selectedProfessional === prof.id ? "default" : "outline"}
+                      onClick={() => selectProfessional(prof.id)}
+                      className="text-xs"
+                    >
+                      {prof.name}
+                    </Button>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Calendário */}
             {selectedProfessional && (
               <div className="border-b border-solid py-2 w-full">
                 <Calendar
@@ -281,13 +267,10 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
               </div>
             )}
 
-            {/* Horários */}
             {selectedDay && (
               <div className="px-5 py-5">
                 {statusList.length === 0 ? (
-                  <p className="text-center text-gray-500 font-semibold">
-                    Nenhum horário disponível para este dia.
-                  </p>
+                  <p className="text-center text-gray-500 font-semibold">Nenhum horário disponível para este dia.</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {statusList.map(({ time, disabled }) => (
@@ -309,8 +292,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
 
           <SheetFooter className="flex flex-col gap-2 border-t border-gray-200 p-2">
             <p className="text-sm font-bold text-primary">
-              Total:{" "}
-              {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(total)}
+              Total: {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(total)}
             </p>
             <SheetClose asChild>
               <Button
