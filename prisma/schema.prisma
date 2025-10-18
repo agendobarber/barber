@@ -25,12 +25,16 @@ model User {
 }
 
 model Barbershop {
-  id            String              @id @default(uuid())
-  name          String
-  address       String
-  phones        String[]
-  description   String
-  imageUrl      String
+  id          String   @id @default(uuid())
+  name        String
+  address     String
+  phones      String[]
+  description String
+  imageUrl    String
+
+  // 🕒 Horários de funcionamento por dia da semana
+  openHours Json? // Exemplo: { "monday": { "open": "08:00", "close": "18:00" }, ... }
+
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   services      BarbershopService[]
@@ -39,32 +43,45 @@ model Barbershop {
 }
 
 model Professional {
-  id           String     @id @default(uuid())
+  id           String                 @id @default(uuid())
   name         String
-  status       Int        @default(1)
-  email        String     @unique
+  status       Int                    @default(1)
+  email        String                 @unique
   phone        String?
   barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
-  bookings     Booking[] // <- lado oposto
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  barbershop   Barbershop             @relation(fields: [barbershopId], references: [id])
+  bookings     Booking[]
+  schedules    ProfessionalSchedule[] // ⬅ adicionado
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+}
+
+model ProfessionalSchedule {
+  id             String       @id @default(uuid())
+  professionalId String
+  professional   Professional @relation(fields: [professionalId], references: [id])
+  dayOfWeek      Int // 0 = domingo, 1 = segunda, ..., 6 = sábado
+  startTime      String // formato "HH:mm"
+  endTime        String // formato "HH:mm"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Booking {
-  id             String            @id @default(uuid())
-  userId         String
-  user           User              @relation(fields: [userId], references: [id])
-  professionalId String?
-  professional   Professional?     @relation(fields: [professionalId], references: [id])
-  date           DateTime
-  durationMinutes Int              @default(30) // <-- NOVO: duração do agendamento em minutos
-  endDate        DateTime         // ⏱️ horário de término do agendamento        
-  status         Int               @default(1)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @default(now())
+  id              String        @id @default(uuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  professionalId  String?
+  professional    Professional? @relation(fields: [professionalId], references: [id])
+  date            DateTime
+  durationMinutes Int           @default(30) // <-- NOVO: duração do agendamento em minutos
+  endDate         DateTime // ⏱️ horário de término do agendamento        
+  status          Int           @default(1)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now())
 
-  services       BookingService[]  // 👈 relação N:N com serviços
+  services BookingService[] // 👈 relação N:N com serviços
 }
 
 model Account {
@@ -107,21 +124,21 @@ model VerificationToken {
 }
 
 model BarbershopService {
-  id           String            @id @default(uuid())
+  id           String           @id @default(uuid())
   name         String
   description  String
-  price        Decimal           @db.Decimal(10, 2)
-  tempo        Int               @default(0)             // ⏱️ novo campo: duração em minutos
+  price        Decimal          @db.Decimal(10, 2)
+  tempo        Int              @default(0) // ⏱️ novo campo: duração em minutos
   barbershopId String
-  status       Int               @default(1)
-  barbershop   Barbershop        @relation(fields: [barbershopId], references: [id])
-  bookingLinks BookingService[]  // 👈 ligação com BookingService
+  status       Int              @default(1)
+  barbershop   Barbershop       @relation(fields: [barbershopId], references: [id])
+  bookingLinks BookingService[] // 👈 ligação com BookingService
 }
 
 model BookingService {
-  id         String            @id @default(uuid())
-  bookingId  String
-  booking    Booking           @relation(fields: [bookingId], references: [id])
-  serviceId  String
-  service    BarbershopService @relation(fields: [serviceId], references: [id])
+  id        String            @id @default(uuid())
+  bookingId String
+  booking   Booking           @relation(fields: [bookingId], references: [id])
+  serviceId String
+  service   BarbershopService @relation(fields: [serviceId], references: [id])
 }

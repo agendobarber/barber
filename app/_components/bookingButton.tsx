@@ -1,26 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Barbershop,
-  BarbershopService,
-  Professional,
-  Booking,
-  Prisma,
-} from "@prisma/client";
+import { Barbershop, BarbershopService, Professional, Booking } from "@prisma/client";
 import { Button } from "./ui/button";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "./ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Card, CardContent } from "./ui/card";
 import { Calendar } from "./ui/calendar";
 import { ptBR } from "date-fns/locale";
-import { setHours, setMinutes, isPast, isToday, addMinutes } from "date-fns";
+import { setHours, setMinutes, isPast, isToday } from "date-fns";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { createBooking } from "../_actions/create-booking";
@@ -31,28 +18,52 @@ import { useRouter } from "next/navigation";
 
 interface BookingButtonProps {
   barbershop: Barbershop & {
-    services: (Omit<BarbershopService, "price"> & {
-      price: number | Prisma.Decimal; // ✅ aceita ambos
-    })[];
-    professionals: Professional[];
+    services: (Omit<BarbershopService, "price"> & { price: number })[];
+    professionals: (Professional & { schedules?: { dayOfWeek: number; startTime: string; endTime: string }[] })[];
   };
 }
 
-const TIME_LIST = [
-  "08:00","08:30","09:00","09:30","10:00","10:30",
-  "11:00","11:30","12:00","12:30","13:00","13:30",
-  "14:00","14:30","15:00","15:30","16:00","16:30",
-  "17:00","17:30","18:00"
-];
+// Gera horários do profissional conforme início e fim do dia
+const generateProfessionalTimeSlots = (
+  schedules: { dayOfWeek: number; startTime: string; endTime: string }[],
+  selectedDay: Date
+): string[] => {
+  const dayOfWeek = selectedDay.getDay();
+  const slots: string[] = [];
 
+  schedules.forEach((s) => {
+    if (s.dayOfWeek === dayOfWeek) {
+      const [startHour, startMin] = s.startTime.split(":").map(Number);
+      const [endHour, endMin] = s.endTime.split(":").map(Number);
+
+      let current = setHours(setMinutes(new Date(selectedDay), startMin), startHour);
+      const endTime = setHours(setMinutes(new Date(selectedDay), endMin), endHour);
+
+      while (current < endTime) {
+        slots.push(
+          `${String(current.getHours()).padStart(2, "0")}:${String(current.getMinutes()).padStart(2, "0")}`
+        );
+        current = new Date(current.getTime() + 30 * 60000); // incrementa 30 min
+      }
+    }
+  });
+
+  return slots;
+};
+
+// Função que verifica status de cada horário
 const getTimeStatusList = ({
+  professionalSchedules,
   bookings,
   selectedDay,
 }: {
+  professionalSchedules: { dayOfWeek: number; startTime: string; endTime: string }[];
   bookings: Booking[];
   selectedDay: Date;
 }) => {
-  return TIME_LIST.map((time) => {
+  const availableSlots = generateProfessionalTimeSlots(professionalSchedules, selectedDay);
+
+  return availableSlots.map((time) => {
     const [hour, minute] = time.split(":").map(Number);
     const current = setHours(setMinutes(new Date(selectedDay), minute), hour);
 
@@ -80,6 +91,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
   const [selectedDay, setSelectedDay] = useState<Date>();
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [dayBookings, setDayBookings] = useState<Booking[]>([]);
+  const [professionalSchedules, setProfessionalSchedules] = useState<{ dayOfWeek: number; startTime: string; endTime: string }[]>([]);
 
   const toggleService = (id: string) => {
     setSelectedServices((prev) =>
@@ -87,8 +99,27 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
     );
   };
 
-  const selectProfessional = (id: string) => {
-    setSelectedProfessional((prev) => (prev === id ? null : id));
+  const selectProfessional = async (id: string) => {
+    if (selectedProfessional === id) return setSelectedProfessional(null);
+
+    setSelectedProfessional(id);
+    setSelectedTimes([]);
+
+    // Pega horários do profissional via API
+    try {
+      const res = await fetch(`/api/professionals/${id}/schedules`);
+      const schedules = await res.json();
+      setProfessionalSchedules(schedules || []);
+    } catch (err) {
+      console.error(err);
+      setProfessionalSchedules([]);
+    }
+
+    if (!selectedDay) return setDayBookings([]);
+
+    // Pega bookings do dia
+    const bookings = await getBookings({ date: selectedDay, professionalId: id });
+    setDayBookings(bookings);
   };
 
   useEffect(() => {
@@ -98,22 +129,17 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
     }
 
     let mounted = true;
-    const fetch = async () => {
-      const bookings = await getBookings({
-        date: selectedDay,
-        professionalId: selectedProfessional,
-      });
+    const fetchBookings = async () => {
+      const bookings = await getBookings({ date: selectedDay, professionalId: selectedProfessional });
       if (mounted) setDayBookings(bookings);
     };
-    fetch();
+    fetchBookings();
 
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [selectedDay, selectedProfessional]);
 
   const total = barbershop.services
-    .filter((service) => selectedServices.includes(service.id))
+    .filter((s) => selectedServices.includes(s.id))
     .reduce((acc, s) => acc + Number(s.price), 0);
 
   const totalTempo = barbershop.services
@@ -133,7 +159,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
       return;
     }
 
-    const statusList = getTimeStatusList({ bookings: dayBookings, selectedDay });
+    const statusList = getTimeStatusList({ bookings: dayBookings, selectedDay, professionalSchedules });
     const clicked = statusList.find((s) => s.time === time);
     if (!clicked || clicked.disabled) {
       toast.error("Horário indisponível. Escolha outro horário.");
@@ -142,7 +168,6 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
 
     const availableTimes = statusList.filter((t) => !t.disabled).map((t) => t.time);
     const startIndex = availableTimes.indexOf(time);
-
     const timesToSelect = availableTimes.slice(startIndex, startIndex + roundedSlots);
     if (timesToSelect.length < roundedSlots) {
       toast.error("Não há horários suficientes disponíveis para o tempo total dos serviços.");
@@ -175,6 +200,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
       setSelectedServices([]);
       setSelectedProfessional(null);
       setDayBookings([]);
+      setProfessionalSchedules([]);
 
       router.push(`/`);
     } catch (err) {
@@ -183,17 +209,17 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
     }
   };
 
+  const statusList = selectedDay
+    ? getTimeStatusList({ bookings: dayBookings, selectedDay, professionalSchedules })
+    : [];
+
   return (
     <>
-      <Button onClick={handleBookingClick} className="w-full md:w-auto">
-        Reservar
-      </Button>
+      <Button onClick={handleBookingClick} className="w-full md:w-auto">Reservar</Button>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="flex flex-col h-screen">
-          <SheetHeader>
-            <SheetTitle>Agendar horário</SheetTitle>
-          </SheetHeader>
+          <SheetHeader><SheetTitle>Agendar horário</SheetTitle></SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-1 space-y-3">
             {/* Serviços */}
@@ -206,10 +232,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
                       <h3 className="font-semibold text-xs">{service.name}</h3>
                       <p className="text-xs text-gray-600">{service.tempo} min</p>
                       <p className="text-xs font-bold text-primary">
-                        {Intl.NumberFormat("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        }).format(Number(service.price))}
+                        {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(service.price))}
                       </p>
                     </div>
                     <input
@@ -260,19 +283,25 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
 
             {/* Horários */}
             {selectedDay && (
-              <div className="px-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 py-5">
-                {getTimeStatusList({ bookings: dayBookings, selectedDay }).map(
-                  ({ time, disabled }) => (
-                    <Button
-                      key={time}
-                      variant={selectedTimes.includes(time) ? "default" : "outline"}
-                      className={`rounded-full ${disabled ? "opacity-50" : ""}`}
-                      onClick={() => handleTimeClick(time)}
-                      disabled={disabled}
-                    >
-                      {time}
-                    </Button>
-                  )
+              <div className="px-5 py-5">
+                {statusList.length === 0 ? (
+                  <p className="text-center text-gray-500 font-semibold">
+                    Nenhum horário disponível para este dia.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {statusList.map(({ time, disabled }) => (
+                      <Button
+                        key={time}
+                        variant={selectedTimes.includes(time) ? "default" : "outline"}
+                        className={`rounded-full ${disabled ? "opacity-50" : ""}`}
+                        onClick={() => handleTimeClick(time)}
+                        disabled={disabled}
+                      >
+                        {time}
+                      </Button>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
@@ -281,19 +310,12 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
           <SheetFooter className="flex flex-col gap-2 border-t border-gray-200 p-2">
             <p className="text-sm font-bold text-primary">
               Total:{" "}
-              {Intl.NumberFormat("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              }).format(total)}
+              {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(total)}
             </p>
             <SheetClose asChild>
               <Button
                 onClick={handleConfirm}
-                disabled={
-                  selectedServices.length === 0 ||
-                  selectedTimes.length === 0 ||
-                  !selectedProfessional
-                }
+                disabled={selectedServices.length === 0 || selectedTimes.length === 0 || !selectedProfessional}
               >
                 Confirmar
               </Button>
