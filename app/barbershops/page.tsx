@@ -2,8 +2,6 @@ import BarbershopItem from "../_components/barber-shop-item";
 import Header from "../_components/header";
 import Search from "../_components/search";
 import { db } from "../_lib/prisma";
-import { Button } from "../_components/ui/button";
-import Image from "next/image";
 
 const BarbershopsPage = async ({ searchParams }: any) => {
   // Next.js infere searchParams como Record<string, string | string[] | undefined>

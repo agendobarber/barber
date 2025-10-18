@@ -11,7 +11,7 @@ import {
   Loader2,
   UsersIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Avatar, AvatarImage } from "./ui/avatar";
@@ -20,8 +20,6 @@ import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import { signOut, useSession } from "next-auth/react";
 import SignInDialog from "./sign-in-dialog";
 import { usePathname } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../_lib/auth";
 
 interface MenuItem {
   label: string;

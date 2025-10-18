@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface BarbershopForm {
     name: string;
@@ -26,7 +27,6 @@ const BarbershopFormComponent = ({ barbershop }: { barbershop: any }) => {
 
     const [preview, setPreview] = useState<string>(barbershop.imageUrl || "");
     const [isSaving, setIsSaving] = useState(false);
-    const [message, setMessage] = useState("");
 
     const router = useRouter();
 
@@ -135,11 +135,16 @@ const BarbershopFormComponent = ({ barbershop }: { barbershop: any }) => {
                         />
                     </label>
                     {preview && (
-                        <img
-                            src={preview}
-                            alt="Preview"
-                            className="w-full h-64 object-contain rounded-lg border border-gray-300"
-                        />
+                        <div className="w-full h-64 relative border border-gray-300 rounded-lg">
+                            <Image
+                                src={preview}
+                                alt="Preview"
+                                fill
+                                style={{ objectFit: "contain" }}
+                                className="rounded-lg"
+                                priority={true} // opcional: melhora LCP para imagens críticas
+                            />
+                        </div>
                     )}
                 </div>
 
@@ -156,8 +161,6 @@ const BarbershopFormComponent = ({ barbershop }: { barbershop: any }) => {
                         Voltar
                     </Button>
                 </div>
-
-                {message && <p className="text-sm text-gray-600">{message}</p>}
             </div>
         </>
     );
