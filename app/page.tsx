@@ -20,27 +20,28 @@ export default async function Home() {
   const barbershops = await db.barbershop.findMany({
     orderBy: { name: "asc" },
   });
-  const singleBarbershop = barbershops[0];
+
+  const singleBarbershop = barbershops.find(
+    (b): b is NonNullable<typeof b> => b !== null
+  );
 
   // Agendamentos
   const bookings = session?.user
     ? await db.booking.findMany({
-      where: {
-        userId: (session.user as any).id,
-        date: { gte: new Date() },
-      },
-      include: {
-        services: {
-          include: {
-            service: {
-              include: { barbershop: true },
+        where: {
+          userId: (session.user as any).id,
+          date: { gte: new Date() },
+        },
+        include: {
+          services: {
+            include: {
+              service: { include: { barbershop: true } },
             },
           },
+          professional: true,
         },
-        professional: true,
-      },
-      orderBy: { date: "asc" },
-    })
+        orderBy: { date: "asc" },
+      })
     : [];
 
   const sanitizedBookings = bookings
@@ -94,7 +95,8 @@ export default async function Home() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <div className="p-5 md:p-8 flex-1 max-w-5xl mx-auto w-full">
+      <div className="p-5 md:p-8 flex-1 max-w-4xl mx-auto w-full">
+        {/* Saudação */}
         <h2 className="text-xl font-bold mb-1">
           Olá, {session?.user?.name ?? "visitante"}
         </h2>
@@ -131,22 +133,24 @@ export default async function Home() {
               Barbearias disponíveis
             </h3>
             <div className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden md:grid md:grid-cols-3 lg:grid-cols-4">
-              {barbershops.map((barbershop) => (
-                <BarbershopItem key={barbershop.id} barbershop={barbershop} />
-              ))}
+              {barbershops
+                .filter((b): b is NonNullable<typeof b> => b !== null)
+                .map((barbershop) => (
+                  <BarbershopItem key={barbershop.id} barbershop={barbershop} />
+                ))}
             </div>
           </>
         ) : (
           /* EXCLUSIVO */
           singleBarbershop && (
-            <div className="mt-6">
-              <div className="relative rounded-2xl overflow-hidden shadow-md">
+            <div className="mt-6 flex flex-col items-center gap-4">
+              <div className="relative rounded-2xl overflow-hidden shadow-md w-full max-w-md">
                 <Image
                   src={singleBarbershop.imageUrl}
                   alt={singleBarbershop.name}
                   width={800}
                   height={400}
-                  className="w-full h-52 object-cover"
+                  className="w-full h-48 object-cover"
                   priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-4">
@@ -156,20 +160,18 @@ export default async function Home() {
                 </div>
               </div>
 
-              <div className="mt-6 flex flex-col items-center gap-3">
-                <Link
-                  href={`/barbershops/${singleBarbershop.id}`}
-                  className="w-full max-w-sm"
-                >
-                  <Button className="w-full text-lg py-6 font-semibold rounded-2xl">
-                    Reservar horário
-                  </Button>
-                </Link>
+              <Link
+                href={`/barbershops/${singleBarbershop.id}`}
+                className="w-full max-w-sm"
+              >
+                <Button className="w-full text-lg py-5 font-semibold rounded-2xl">
+                  Reservar horário
+                </Button>
+              </Link>
 
-                <p className="text-gray-400 text-sm">
-                  Toque acima para escolher o melhor horário pra você ✂️
-                </p>
-              </div>
+              <p className="text-gray-400 text-sm text-center">
+                Toque acima para escolher o melhor horário para você ✂️
+              </p>
             </div>
           )
         )}

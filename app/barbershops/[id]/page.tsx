@@ -1,6 +1,5 @@
 import BookingButton from "@/app/_components/bookingButton";
 import PhoneItem from "@/app/_components/phone-item";
-import ServiceItem from "@/app/_components/service-item";
 import SidebarSheet from "@/app/_components/sidebar-sheets";
 import { Button } from "@/app/_components/ui/button";
 import { Sheet, SheetTrigger } from "@/app/_components/ui/sheet";
@@ -10,7 +9,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-// 🔹 Tipo de serviço limpo (sem Prisma.Decimal)
 interface SanitizedService {
   id: string;
   name: string;
@@ -21,15 +19,11 @@ interface SanitizedService {
   status: number;
 }
 
-const BarbershopPage = async ({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) => {
-  // ✅ Corrige o uso assíncrono de params
+export const dynamic = "force-dynamic";
+
+const BarbershopPage = async ({ params }: { params: { id: string } }) => {
   const { id } = await params;
 
-  // ✅ Busca barbearia e serviços
   const barbershop = await db.barbershop.findUnique({
     where: { id },
     include: {
@@ -40,41 +34,37 @@ const BarbershopPage = async ({
 
   if (!barbershop) return notFound();
 
-  // ✅ Converte Decimal -> number e tipa corretamente
   const sanitizedBarbershop = {
     ...barbershop,
     services: barbershop.services.map(
       (s) =>
-      ({
-        ...s,
-        price: Number(s.price),
-      } as SanitizedService)
+        ({
+          ...s,
+          price: Number(s.price),
+        } as SanitizedService)
     ),
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-background flex flex-col">
       {/* BANNER */}
-      <div className="relative w-full h-[250px] md:h-[400px] lg:h-[500px]">
+      <div className="relative w-full h-[220px] md:h-[350px] lg:h-[450px]">
         <Image
           src={sanitizedBarbershop.imageUrl}
           fill
+          alt={sanitizedBarbershop.name}
           className="object-cover"
-          alt="Imagem da barbearia"
-          quality={100}
+          priority
         />
 
-        <Button
-          size="icon"
-          variant="secondary"
-          className="absolute left-4 top-4"
-          asChild
-        >
+        {/* Voltar */}
+        <Button size="icon" variant="secondary" className="absolute left-4 top-4" asChild>
           <Link href="/">
             <ChevronLeftIcon />
           </Link>
         </Button>
 
+        {/* Menu lateral */}
         <Sheet>
           <SheetTrigger asChild>
             <Button size="icon" className="absolute right-4 top-4">
@@ -86,45 +76,31 @@ const BarbershopPage = async ({
       </div>
 
       {/* INFO PRINCIPAL */}
-      <div className="p-5 border-b border-solid">
-        <h1 className="mb-3 font-bold text-xl">{sanitizedBarbershop.name}</h1>
-        <div className="mb-2 flex items-center gap-2">
+      <div className="p-5 flex flex-col gap-1 border-b border-solid">
+        <h1 className="text-2xl font-bold">{sanitizedBarbershop.name}</h1>
+        <div className="flex items-center gap-2">
           <MapPinIcon className="text-primary" size={18} />
-          <p className="text-sm">{sanitizedBarbershop.address}</p>
+          <p className="text-sm truncate">{sanitizedBarbershop.address}</p>
         </div>
       </div>
 
-      {/* SOBRE NÓS */}
-      <div className="p-5 border-b border-solid space-y-2">
-        <h2 className="text-xs font-bold uppercase text-gray-400">Sobre nós</h2>
-        <p className="text-sm text-justify">{sanitizedBarbershop.description}</p>
-      </div>
-
-      {/* SERVIÇOS */}
-      <div className="space-y-3 p-5">
-        {/*<h2 className="text-xs font-bold uppercase text-gray-400 mb-3">
-          Serviços
-        </h2>
-
-         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {sanitizedBarbershop.services.map((service) => (
-            <ServiceItem
-              key={service.id}
-              service={service}
-              barbershop={{ name: sanitizedBarbershop.name }}
-            />
-          ))}
+      {/* DESCRIÇÃO */}
+      {sanitizedBarbershop.description && (
+        <div className="p-5 border-b border-solid">
+          <p className="text-sm text-gray-500 text-justify line-clamp-3">
+            {sanitizedBarbershop.description}
+          </p>
         </div>
-           */}
-        {/* Botão de reserva */}
-        <div className="mt-6">
-          <BookingButton barbershop={sanitizedBarbershop as any} />
-        </div>
+      )}
+
+      {/* BOTÃO DE RESERVA */}
+      <div className="p-5">
+        <BookingButton barbershop={sanitizedBarbershop as any} />
       </div>
 
       {/* TELEFONES */}
-      {sanitizedBarbershop.phones && sanitizedBarbershop.phones.length > 0 && (
-        <div className="p-5 space-y-3">
+      {sanitizedBarbershop.phones?.length > 0 && (
+        <div className="p-5 space-y-2">
           {sanitizedBarbershop.phones.map((phone) => (
             <PhoneItem key={phone} phone={phone} />
           ))}
