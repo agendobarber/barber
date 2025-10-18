@@ -65,11 +65,5 @@ const withPWA = withPWAInit({
   ],
 });
 
-// Bundle Analyzer
-const withBundleAnalyzer = require("@next/bundle-analyzer")({
-  enabled: process.env.ANALYZE === "true",
-});
-
 // @ts-expect-error conflito de tipos do next-pwa
-module.exports = withBundleAnalyzer(withPWA(nextConfig));
-
+export default withPWA(nextConfig);
