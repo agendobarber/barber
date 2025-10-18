@@ -3,6 +3,21 @@ import withPWAInit from "next-pwa";
 
 const isDev = process.env.NODE_ENV === "development";
 
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "utfs.io",
+        pathname: "/f/**",
+      },
+    ],
+    formats: ["image/avif", "image/webp"], // otimização de imagem
+  },
+};
+
+// Configuração do PWA
 const withPWA = withPWAInit({
   dest: "public",
   register: true,
@@ -19,14 +34,23 @@ const withPWA = withPWAInit({
         expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 }, // 1 ano
       },
     },
-    // API do seu servidor
+    // API do servidor
     {
-      urlPattern: /^\/api\/.*/, // todas as rotas que começam com /api/
+      urlPattern: /^\/api\/.*/,
       handler: "NetworkFirst",
       options: {
         cacheName: "api-cache",
         networkTimeoutSeconds: 3,
         expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 }, // 1 dia
+      },
+    },
+    // Assets estáticos do Next (_next)
+    {
+      urlPattern: /^\/_next\/.*\.(js|css|json)/,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "static-assets",
+        expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 }, // 30 dias
       },
     },
     // Tudo mais
@@ -41,19 +65,11 @@ const withPWA = withPWAInit({
   ],
 });
 
-const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "utfs.io",
-        pathname: "/f/**",
-      },
-    ],
-    formats: ["image/avif", "image/webp"], // Otimização de imagem
-  },
-};
+// Bundle Analyzer
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
 
 // @ts-expect-error conflito de tipos do next-pwa
-export default withPWA(nextConfig);
+module.exports = withBundleAnalyzer(withPWA(nextConfig));
+
