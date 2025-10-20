@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import dynamic from "next/dynamic";
 import { Barbershop, BarbershopService, Professional, Booking } from "@prisma/client";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -12,23 +11,24 @@ import { toast } from "sonner";
 import { createBooking } from "../_actions/create-booking";
 import { getBookings } from "../_actions/get-bookings";
 import { useRouter } from "next/navigation";
-
-// Lazy-load dos componentes pesados
-const Calendar = dynamic(() => import("./ui/calendar").then(mod => mod.Calendar), { ssr: false });
-const SignInDialog = dynamic(() => import("./sign-in-dialog"), { ssr: false });
-const Sheet = dynamic(() => import("./ui/sheet").then(mod => mod.Sheet), { ssr: false });
-const SheetHeader = dynamic(() => import("./ui/sheet").then(mod => mod.SheetHeader), { ssr: false });
-const SheetTitle = dynamic(() => import("./ui/sheet").then(mod => mod.SheetTitle), { ssr: false });
-const SheetContent = dynamic(() => import("./ui/sheet").then(mod => mod.SheetContent), { ssr: false });
-const SheetFooter = dynamic(() => import("./ui/sheet").then(mod => mod.SheetFooter), { ssr: false });
-const SheetClose = dynamic(() => import("./ui/sheet").then(mod => mod.SheetClose), { ssr: false });
-const Dialog = dynamic(() => import("./ui/dialog").then(mod => mod.Dialog), { ssr: false });
-const DialogContent = dynamic(() => import("./ui/dialog").then(mod => mod.DialogContent), { ssr: false });
+import { Calendar } from "./ui/calendar";
+import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
+import {
+  Sheet,
+  SheetHeader,
+  SheetTitle,
+  SheetContent,
+  SheetFooter,
+  SheetClose,
+} from "./ui/sheet";
+import SignInDialog from "./sign-in-dialog";
 
 interface BookingButtonProps {
   barbershop: Barbershop & {
     services: (Omit<BarbershopService, "price"> & { price: number })[];
-    professionals: (Professional & { schedules?: { dayOfWeek: number; startTime: string; endTime: string }[] })[];
+    professionals: (Professional & {
+      schedules?: { dayOfWeek: number; startTime: string; endTime: string }[];
+    })[];
   };
 }
 
@@ -48,7 +48,12 @@ const generateProfessionalTimeSlots = (
       const endTime = setHours(setMinutes(new Date(selectedDay), endMin), endHour);
 
       while (current < endTime) {
-        slots.push(`${String(current.getHours()).padStart(2, "0")}:${String(current.getMinutes()).padStart(2, "0")}`);
+        slots.push(
+          `${String(current.getHours()).padStart(2, "0")}:${String(current.getMinutes()).padStart(
+            2,
+            "0"
+          )}`
+        );
         current = new Date(current.getTime() + 30 * 60000);
       }
     }
@@ -90,34 +95,58 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [signInDialogOpen, setSignInDialogOpen] = useState(false);
 
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null);
+  const [professionalServices, setProfessionalServices] = useState<
+    (Omit<BarbershopService, "price"> & { price: number })[]
+  >([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDay, setSelectedDay] = useState<Date>();
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [dayBookings, setDayBookings] = useState<Booking[]>([]);
-  const [professionalSchedules, setProfessionalSchedules] = useState<{ dayOfWeek: number; startTime: string; endTime: string }[]>([]);
+  const [professionalSchedules, setProfessionalSchedules] = useState<
+    { dayOfWeek: number; startTime: string; endTime: string }[]
+  >([]);
 
   const bookingsCache = useRef<{ [key: string]: Booking[] }>({});
 
-  const toggleService = (id: string) => {
-    setSelectedServices((prev) => prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]);
+  const handleBookingClick = () => {
+    if (!data?.user) return setSignInDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const selectProfessional = async (id: string) => {
-    if (selectedProfessional === id) return setSelectedProfessional(null);
+    if (selectedProfessional === id) {
+      setSelectedProfessional(null);
+      setProfessionalServices([]);
+      setSelectedServices([]);
+      setSelectedDay(undefined);
+      setDayBookings([]);
+      setProfessionalSchedules([]);
+      return;
+    }
 
     setSelectedProfessional(id);
     setSelectedTimes([]);
+    setSelectedServices([]);
 
     try {
-      const res = await fetch(`/api/professionals/${id}/schedules`);
-      const schedules = await res.json();
+      const resSchedules = await fetch(`/api/professionals/${id}/schedules`);
+      const schedules = await resSchedules.json();
       setProfessionalSchedules(schedules || []);
-    } catch {
+
+      const resServices = await fetch(`/api/professionals/${id}/services`);
+      const services = await resServices.json();
+      setProfessionalServices(services || []);
+    } catch (err) {
+      console.error(err);
       setProfessionalSchedules([]);
+      setProfessionalServices([]);
     }
 
-    if (!selectedDay) return setDayBookings([]);
+    if (!selectedDay) {
+      setDayBookings([]);
+      return;
+    }
 
     const cacheKey = `${id}_${selectedDay.toDateString()}`;
     if (bookingsCache.current[cacheKey]) {
@@ -146,39 +175,49 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
     };
     fetchBookings();
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [selectedDay, selectedProfessional]);
 
+  const toggleService = (id: string) => {
+    setSelectedServices((prev) =>
+      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
+    );
+  };
+
   const total = useMemo(
-    () => barbershop.services.filter(s => selectedServices.includes(s.id)).reduce((acc, s) => acc + Number(s.price), 0),
-    [selectedServices, barbershop.services]
+    () =>
+      professionalServices
+        .filter((s) => selectedServices.includes(s.id))
+        .reduce((acc, s) => acc + Number(s.price), 0),
+    [selectedServices, professionalServices]
   );
 
   const totalTempo = useMemo(
-    () => barbershop.services.filter(s => selectedServices.includes(s.id)).reduce((acc, s) => acc + (s.tempo || 0), 0),
-    [selectedServices, barbershop.services]
+    () =>
+      professionalServices
+        .filter((s) => selectedServices.includes(s.id))
+        .reduce((acc, s) => acc + (s.tempo || 0), 0),
+    [selectedServices, professionalServices]
   );
 
   const roundedSlots = Math.ceil(totalTempo / 30);
 
-  const handleBookingClick = () => {
-    if (!data?.user) return setSignInDialogOpen(true);
-    setSheetOpen(true);
-  };
-
   const handleTimeClick = (time: string) => {
     if (!selectedDay || !selectedProfessional || selectedServices.length === 0) {
-      return toast.error("Selecione serviço, barbeiro e dia antes de escolher o horário.");
+      return toast.error("Selecione barbeiro, serviço e dia antes de escolher o horário.");
     }
 
     const statusList = getTimeStatusList({ bookings: dayBookings, selectedDay, professionalSchedules });
     const clicked = statusList.find((s) => s.time === time);
     if (!clicked || clicked.disabled) return toast.error("Horário indisponível.");
 
-    const availableTimes = statusList.filter(t => !t.disabled).map(t => t.time);
+    const availableTimes = statusList.filter((t) => !t.disabled).map((t) => t.time);
     const startIndex = availableTimes.indexOf(time);
     const timesToSelect = availableTimes.slice(startIndex, startIndex + roundedSlots);
-    if (timesToSelect.length < roundedSlots) return toast.error("Não há horários suficientes disponíveis.");
+    if (timesToSelect.length < roundedSlots)
+      return toast.error("Não há horários suficientes disponíveis.");
 
     setSelectedTimes(timesToSelect);
   };
@@ -202,6 +241,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
       setSelectedProfessional(null);
       setDayBookings([]);
       setProfessionalSchedules([]);
+      setProfessionalServices([]);
       router.push(`/`);
     } catch (err) {
       console.error(err);
@@ -215,41 +255,23 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
 
   return (
     <>
-      <Button onClick={handleBookingClick} className="w-full md:w-auto">Reservar</Button>
+      <Button onClick={handleBookingClick} className="w-full md:w-auto">
+        Reservar
+      </Button>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="flex flex-col h-screen">
-          <SheetHeader><SheetTitle>Agendar horário</SheetTitle></SheetHeader>
+          <SheetHeader>
+            <SheetTitle>Agendar horário</SheetTitle>
+          </SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-1 space-y-3">
             <div>
-              <h3 className="font-semibold text-sm mb-2">Escolha os serviços</h3>
-              {barbershop.services.map(service => (
-                <Card key={service.id}>
-                  <CardContent className="flex justify-between items-center p-2 h-12">
-                    <div>
-                      <h3 className="font-semibold text-xs">{service.name}</h3>
-                      <p className="text-xs text-gray-600">{service.tempo} min</p>
-                      <p className="text-xs font-bold text-primary">
-                        {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(service.price))}
-                      </p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={selectedServices.includes(service.id)}
-                      onChange={() => toggleService(service.id)}
-                      className="h-4 w-4"
-                    />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {selectedServices.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-sm mb-2">Escolha o barbeiro</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {barbershop.professionals.filter(p => p.status === 1).map(prof => (
+              <h3 className="font-semibold text-sm mb-2">Escolha o barbeiro</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {barbershop.professionals
+                  .filter((p) => p.status === 1)
+                  .map((prof) => (
                     <Button
                       key={prof.id}
                       variant={selectedProfessional === prof.id ? "default" : "outline"}
@@ -259,18 +281,43 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
                       {prof.name}
                     </Button>
                   ))}
-                </div>
+              </div>
+            </div>
+
+            {selectedProfessional && professionalServices.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-sm mb-2">Serviços disponíveis</h3>
+                {professionalServices.map((service) => (
+                  <Card key={service.id}>
+                    <CardContent className="flex justify-between items-center p-2 h-12">
+                      <div>
+                        <h3 className="font-semibold text-xs">{service.name}</h3>
+                        <p className="text-xs text-gray-600">{service.tempo} min</p>
+                        <p className="text-xs font-bold text-primary">
+                          {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                            Number(service.price)
+                          )}
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={selectedServices.includes(service.id)}
+                        onChange={() => toggleService(service.id)}
+                        className="h-4 w-4"
+                      />
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
 
-            {selectedProfessional && (
+            {selectedServices.length > 0 && selectedProfessional && (
               <div className="border-b border-solid py-2 w-full">
                 <Calendar
                   selected={selectedDay}
                   onSelect={setSelectedDay}
                   mode="single"
                   locale={ptBR}
-                  hidden={{ before: new Date() }}
                   className="w-full text-sm"
                 />
               </div>
@@ -279,7 +326,9 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
             {selectedDay && (
               <div className="px-5 py-5">
                 {statusList.length === 0 ? (
-                  <p className="text-center text-gray-500 font-semibold">Nenhum horário disponível para este dia.</p>
+                  <p className="text-center text-gray-500 font-semibold">
+                    Nenhum horário disponível para este dia.
+                  </p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {statusList.map(({ time, disabled }) => (
@@ -301,12 +350,15 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
 
           <SheetFooter className="flex flex-col gap-2 border-t border-gray-200 p-2">
             <p className="text-sm font-bold text-primary">
-              Total: {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(total)}
+              Total:{" "}
+              {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(total)}
             </p>
             <SheetClose asChild>
               <Button
                 onClick={handleConfirm}
-                disabled={selectedServices.length === 0 || selectedTimes.length === 0 || !selectedProfessional}
+                disabled={
+                  selectedServices.length === 0 || selectedTimes.length === 0 || !selectedProfessional
+                }
               >
                 Confirmar
               </Button>
@@ -315,8 +367,10 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
         </SheetContent>
       </Sheet>
 
+      {/* 🔥 Dialog acessível e 100% funcional */}
       <Dialog open={signInDialogOpen} onOpenChange={setSignInDialogOpen}>
         <DialogContent>
+          <DialogTitle className="sr-only">Entrar</DialogTitle>
           <SignInDialog />
         </DialogContent>
       </Dialog>

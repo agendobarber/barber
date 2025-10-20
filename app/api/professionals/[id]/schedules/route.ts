@@ -1,23 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/_lib/prisma";
+import { NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  try {
-    const params = await context.params; // ✅ compatível com dev e produção
-    const professionalId = params.id;
+interface Params {
+    params: { id: string };
+}
 
-    if (!professionalId) {
-      return NextResponse.json({ error: "ID não fornecido" }, { status: 400 });
+export async function GET(req: Request, { params }: Params) {
+    try {
+        const professionalId = params.id;
+
+        if (!professionalId) {
+            return NextResponse.json({ error: "ID do profissional é obrigatório" }, { status: 400 });
+        }
+
+        const services = await db.barbershopService.findMany({
+            where: {
+                professionals: {
+                    some: { id: professionalId },
+                },
+            },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                price: true,
+                tempo: true,
+            },
+        });
+
+        return NextResponse.json(services);
+    } catch (error) {
+        console.error("Erro ao buscar serviços:", error);
+        return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
     }
-
-    const schedules = await db.professionalSchedule.findMany({
-      where: { professionalId },
-      select: { dayOfWeek: true, startTime: true, endTime: true },
-    });
-
-    return NextResponse.json(schedules);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Erro ao buscar horários" }, { status: 500 });
-  }
 }

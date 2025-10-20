@@ -9,14 +9,20 @@ const NewProfessionalPage = async () => {
 
   if (!session?.user) return notFound();
 
-  // Buscar a barbearia do admin logado
   const barbershop = await db.barbershop.findFirst({
     where: { admins: { some: { id: (session.user as any).id } } },
+    include: { services: true },
   });
 
   if (!barbershop) return notFound();
 
-  return <ProfessionalFormComponent barbershopId={barbershop.id} />;
+  // 🔧 Converte Decimal → number para evitar erro de serialização
+  const services = barbershop.services.map((s) => ({
+    ...s,
+    price: Number(s.price),
+  }));
+
+  return <ProfessionalFormComponent barbershopId={barbershop.id} services={services} />;
 };
 
 export default NewProfessionalPage;

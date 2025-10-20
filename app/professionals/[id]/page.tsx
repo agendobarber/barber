@@ -4,12 +4,13 @@ import { authOptions } from "@/app/_lib/auth";
 import { db } from "@/app/_lib/prisma";
 import ProfessionalFormComponent from "@/app/_components/professionalFormComponent";
 
+// Tipagem
 interface EditProfessionalPageProps {
-  params: Promise<{ id: string }>; // 👈 agora params é uma Promise
+  params: Promise<{ id: string }>;
 }
 
 const EditProfessionalPage = async ({ params }: EditProfessionalPageProps) => {
-  const { id } = await params; // 👈 precisa "await" aqui
+  const { id } = await params;
   if (!id) return notFound();
 
   const session = await getServerSession(authOptions);
@@ -20,6 +21,7 @@ const EditProfessionalPage = async ({ params }: EditProfessionalPageProps) => {
     include: {
       barbershop: { include: { admins: true } },
       schedules: true,
+      services: true, // opcional, caso tenha relação many-to-many
     },
   });
 
@@ -30,6 +32,15 @@ const EditProfessionalPage = async ({ params }: EditProfessionalPageProps) => {
   );
   if (!isAdmin) return notFound();
 
+  // Busca os serviços da barbearia (convertendo Decimal → number)
+  const services = await db.barbershopService.findMany({
+    where: { barbershopId: professional.barbershopId },
+  });
+  const serializableServices = services.map((s) => ({
+    ...s,
+    price: Number(s.price),
+  }));
+
   return (
     <ProfessionalFormComponent
       barbershopId={professional.barbershopId}
@@ -39,7 +50,9 @@ const EditProfessionalPage = async ({ params }: EditProfessionalPageProps) => {
         email: professional.email,
         phone: professional.phone || "",
         schedules: professional.schedules,
+        serviceIds: professional.services?.map((s) => s.id) || [],
       }}
+      services={serializableServices}
     />
   );
 };

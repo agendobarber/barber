@@ -51,7 +51,8 @@ model Professional {
   barbershopId String
   barbershop   Barbershop             @relation(fields: [barbershopId], references: [id])
   bookings     Booking[]
-  schedules    ProfessionalSchedule[] // ⬅ adicionado
+  schedules    ProfessionalSchedule[]
+  services     BarbershopService[]    @relation("ProfessionalServices") // 👈 NOVO
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
 }
@@ -128,11 +129,12 @@ model BarbershopService {
   name         String
   description  String
   price        Decimal          @db.Decimal(10, 2)
-  tempo        Int              @default(0) // ⏱️ novo campo: duração em minutos
+  tempo        Int              @default(0)
   barbershopId String
   status       Int              @default(1)
   barbershop   Barbershop       @relation(fields: [barbershopId], references: [id])
-  bookingLinks BookingService[] // 👈 ligação com BookingService
+  bookingLinks BookingService[]
+  professionals Professional[]  @relation("ProfessionalServices") // 👈 NOVO
 }
 
 model BookingService {
