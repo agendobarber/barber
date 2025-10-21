@@ -28,7 +28,7 @@ const Header = () => {
             src="/logoOficial.png"
             height={17}
             width={120}
-            className="cursor-pointer hover:opacity-80 transition filter invert"
+            className="cursor-pointer"
             // ou use o estilo abaixo se quiser controle mais fino:
             // style={{ filter: "invert(1) brightness(1.5)" }}
           />
