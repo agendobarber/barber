@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 
 // Metadados PWA
 export const metadata: Metadata = {
-  title: "Calendo",
+  title: "Jc Barber App",
   description: "Agendamento fácil para barbeiros e salões",
   manifest: "/manifest.json",
   icons: {

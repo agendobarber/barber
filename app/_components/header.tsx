@@ -24,7 +24,7 @@ const Header = () => {
         {/* 👇 O logo agora leva o usuário para / ou /dashboard */}
         <Link href={homeLink}>
           <Image
-            alt="Calendo"
+            alt="Jc Barber App"
             src="/logoOficial.png"
             height={17}
             width={120}
