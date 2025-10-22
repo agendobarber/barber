@@ -22,8 +22,8 @@ export const metadata: Metadata = {
   description: "Agendamento fácil para barbeiros e salões",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icons/icon-192x192.png",
-    apple: "/icons/icon-192x192.png",
+    icon: "/logoOficial.png",
+    apple: "/logoOficial.png",
   },
 };
 
