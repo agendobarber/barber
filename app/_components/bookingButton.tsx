@@ -353,16 +353,22 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
           </div>
 
           {/* Rodapé fixo */}
+          {/* Rodapé fixo com texto preto apenas no total */}
           <SheetFooter className="flex flex-col gap-2 border-t border-gray-200 p-4 bg-white sticky bottom-0">
-            <p className="text-sm font-bold text-primary">
+            <p className="text-sm font-semibold text-black">
               Total:{" "}
-              {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(total)}
+              {Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }).format(total)}
             </p>
             <SheetClose asChild>
               <Button
                 onClick={handleConfirm}
                 disabled={
-                  selectedServices.length === 0 || selectedTimes.length === 0 || !selectedProfessional
+                  selectedServices.length === 0 ||
+                  selectedTimes.length === 0 ||
+                  !selectedProfessional
                 }
                 className="w-full"
               >
@@ -370,6 +376,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
               </Button>
             </SheetClose>
           </SheetFooter>
+
         </SheetContent>
       </Sheet>
 
