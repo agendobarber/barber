@@ -49,10 +49,9 @@ const generateProfessionalTimeSlots = (
 
       while (current < endTime) {
         slots.push(
-          `${String(current.getHours()).padStart(2, "0")}:${String(current.getMinutes()).padStart(
-            2,
-            "0"
-          )}`
+          `${String(current.getHours()).padStart(2, "0")}:${String(
+            current.getMinutes()
+          ).padStart(2, "0")}`
         );
         current = new Date(current.getTime() + 30 * 60000);
       }
@@ -260,12 +259,14 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
       </Button>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="flex flex-col h-screen">
-          <SheetHeader>
+        <SheetContent className="flex flex-col h-screen p-0">
+          <SheetHeader className="p-4 border-b border-gray-200">
             <SheetTitle>Agendar horário</SheetTitle>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-1 space-y-3">
+          {/* Conteúdo rolável */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            {/* Escolher barbeiro */}
             <div>
               <h3 className="font-semibold text-sm mb-2">Escolha o barbeiro</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -284,6 +285,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
               </div>
             </div>
 
+            {/* Serviços */}
             {selectedProfessional && professionalServices.length > 0 && (
               <div>
                 <h3 className="font-semibold text-sm mb-2">Serviços disponíveis</h3>
@@ -311,6 +313,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
               </div>
             )}
 
+            {/* Calendário */}
             {selectedServices.length > 0 && selectedProfessional && (
               <div className="border-b border-solid py-2 w-full">
                 <Calendar
@@ -323,8 +326,9 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
               </div>
             )}
 
+            {/* Horários */}
             {selectedDay && (
-              <div className="px-5 py-5">
+              <div className="py-5">
                 {statusList.length === 0 ? (
                   <p className="text-center text-gray-500 font-semibold">
                     Nenhum horário disponível para este dia.
@@ -348,7 +352,8 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
             )}
           </div>
 
-          <SheetFooter className="flex flex-col gap-2 border-t border-gray-200 p-2">
+          {/* Rodapé fixo */}
+          <SheetFooter className="flex flex-col gap-2 border-t border-gray-200 p-4 bg-white sticky bottom-0">
             <p className="text-sm font-bold text-primary">
               Total:{" "}
               {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(total)}
@@ -359,6 +364,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
                 disabled={
                   selectedServices.length === 0 || selectedTimes.length === 0 || !selectedProfessional
                 }
+                className="w-full"
               >
                 Confirmar
               </Button>
@@ -367,7 +373,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
         </SheetContent>
       </Sheet>
 
-      {/* 🔥 Dialog acessível e 100% funcional */}
+      {/* Dialog de login */}
       <Dialog open={signInDialogOpen} onOpenChange={setSignInDialogOpen}>
         <DialogContent>
           <DialogTitle className="sr-only">Entrar</DialogTitle>
