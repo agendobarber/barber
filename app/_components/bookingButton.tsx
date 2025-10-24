@@ -259,7 +259,8 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
       </Button>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="flex flex-col h-screen p-0">
+        {/* 💡 Correção do bug de altura em navegadores mobile */}
+        <SheetContent className="flex flex-col h-[100dvh] md:h-screen p-0">
           <SheetHeader className="p-4 border-b border-gray-200">
             <SheetTitle>Agendar horário</SheetTitle>
           </SheetHeader>
@@ -352,8 +353,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
             )}
           </div>
 
-          {/* Rodapé fixo */}
-          {/* Rodapé fixo com texto preto apenas no total */}
+          {/* Rodapé fixo com texto preto */}
           <SheetFooter className="flex flex-col gap-2 border-t border-gray-200 p-4 bg-white sticky bottom-0">
             <p className="text-sm font-semibold text-black">
               Total:{" "}
@@ -376,7 +376,6 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
               </Button>
             </SheetClose>
           </SheetFooter>
-
         </SheetContent>
       </Sheet>
 
