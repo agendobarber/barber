@@ -18,7 +18,21 @@ export default function OneSignalClient() {
     navigator.serviceWorker.register = ((scriptURL: string, options?: RegistrationOptions) => {
       if (scriptURL.toLowerCase().includes('onesignalsdkworker.js')) {
         console.warn('[OneSignal] Ignorando registro automático inválido.');
-        return Promise.resolve(null as unknown as ServiceWorkerRegistration);
+
+        // ✅ Retorna um mock para evitar erro no SDK
+        const fakeRegistration: ServiceWorkerRegistration = {
+          installing: null,
+          waiting: null,
+          active: null,
+          scope: '/',
+          update: async () => {},
+          unregister: async () => true,
+          addEventListener: () => {},
+          removeEventListener: () => {},
+          dispatchEvent: () => false
+        } as unknown as ServiceWorkerRegistration;
+
+        return Promise.resolve(fakeRegistration);
       }
       return originalRegister(scriptURL, options);
     }) as typeof originalRegister;
@@ -41,7 +55,7 @@ export default function OneSignalClient() {
     window.OneSignalDeferred.push(async (OneSignal: any) => {
       console.log("[OneSignal] Inicializando...");
       await OneSignal.init({
-        appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd', // ✅ Seu App ID
+        appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd',
         allowLocalhostAsSecureOrigin: true,
         notifyButton: { enable: true },
         serviceWorkerPath: '/OneSignalSDKWorker.js',
