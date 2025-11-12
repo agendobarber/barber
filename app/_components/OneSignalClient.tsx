@@ -30,12 +30,18 @@ export default function OneSignalClient() {
         .catch(err => console.error("[OneSignal] Erro ao registrar SW:", err));
     }
 
-    // ✅ Inicializar OneSignal
+    // ✅ Carregar SDK do OneSignal dinamicamente
+    const script = document.createElement('script');
+    script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+    script.async = true;
+    document.head.appendChild(script);
+
+    // ✅ Inicializar OneSignal quando SDK estiver pronto
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async (OneSignal: any) => {
       console.log("[OneSignal] Inicializando...");
       await OneSignal.init({
-        appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd',
+        appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd', // ✅ Seu App ID
         allowLocalhostAsSecureOrigin: true,
         notifyButton: { enable: true },
         serviceWorkerPath: '/OneSignalSDKWorker.js',

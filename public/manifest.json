@@ -8,7 +8,7 @@
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#0d6efd",
-  "gcm_sender_id": "482941778795",
+  "gcm_sender_id": "482941778795", 
   "icons": [
     {
       "src": "/logoOficial.png",
@@ -20,5 +20,6 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "prefer_related_applications": false
 }
