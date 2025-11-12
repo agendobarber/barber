@@ -59,9 +59,11 @@ export default function OneSignalClient() {
           appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd',
           allowLocalhostAsSecureOrigin: true,
           notifyButton: { enable: true },
-          serviceWorkerPath: '/OneSignalSDKWorker.js',
+          /*serviceWorkerPath: '/OneSignalSDKWorker.js',
           serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
-          serviceWorkerParam: { scope: '/' },
+          serviceWorkerParam: { scope: '/' }
+          */
+          ,
         });
         console.log("[OneSignal] Inicializado com sucesso.");
       } catch (err) {
