@@ -35,6 +35,7 @@ export default function OneSignalClient() {
       console.log("[OneSignal] Inicializando...");
       await OneSignal.init({
         appId: '8e1a7c53-84a0-442f-963d-3bd980a77e1b',
+        safari_web_id: "web.onesignal.auto.25811132-3882-4d1b-a1e7-3632ed052841",
         allowLocalhostAsSecureOrigin: true,
         notifyButton: { enable: true },
         serviceWorkerPath: '/OneSignalSDKWorker.js',
