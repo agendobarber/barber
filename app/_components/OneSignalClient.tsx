@@ -61,9 +61,8 @@ export default function OneSignalClient() {
           notifyButton: { enable: true },
           /*serviceWorkerPath: '/OneSignalSDKWorker.js',
           serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
-          serviceWorkerParam: { scope: '/' }
+          serviceWorkerParam: { scope: '/' },
           */
-          ,
         });
         console.log("[OneSignal] Inicializado com sucesso.");
       } catch (err) {
