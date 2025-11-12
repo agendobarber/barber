@@ -25,10 +25,10 @@ export default function OneSignalClient() {
           waiting: null,
           active: null,
           scope: '/',
-          update: async () => {},
+          update: async () => { },
           unregister: async () => true,
-          addEventListener: () => {},
-          removeEventListener: () => {},
+          addEventListener: () => { },
+          removeEventListener: () => { },
           dispatchEvent: () => false
         } as unknown as ServiceWorkerRegistration;
 
@@ -54,15 +54,19 @@ export default function OneSignalClient() {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async (OneSignal: any) => {
       console.log("[OneSignal] Inicializando...");
-      await OneSignal.init({
-        appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd',
-        allowLocalhostAsSecureOrigin: true,
-        notifyButton: { enable: true },
-        serviceWorkerPath: '/OneSignalSDKWorker.js',
-        serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
-        serviceWorkerParam: { scope: '/' },
-      });
-      console.log("[OneSignal] Inicializado com sucesso.");
+      try {
+        await OneSignal.init({
+          appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd',
+          allowLocalhostAsSecureOrigin: true,
+          notifyButton: { enable: true },
+          serviceWorkerPath: '/OneSignalSDKWorker.js',
+          serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
+          serviceWorkerParam: { scope: '/' },
+        });
+        console.log("[OneSignal] Inicializado com sucesso.");
+      } catch (err) {
+        console.error("[OneSignal] Erro no init:", err);
+      }
     });
   }, []);
 
