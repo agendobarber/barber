@@ -11,12 +11,13 @@ export default function OneSignalClient() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // ✅ Interceptar registro automático inválido do SDK
-    const originalRegister = navigator.serviceWorker.register;
+    // ✅ Preserva contexto original do método register
+    const originalRegister = navigator.serviceWorker.register.bind(navigator.serviceWorker);
+
+    // ✅ Intercepta registro automático inválido do SDK
     navigator.serviceWorker.register = ((scriptURL: string, options?: RegistrationOptions) => {
-      if (scriptURL.includes('onesignalsdkworker.js')) {
+      if (scriptURL.toLowerCase().includes('onesignalsdkworker.js')) {
         console.warn('[OneSignal] Ignorando registro automático inválido.');
-        // ✅ Retorna um valor nulo forçando o tipo para evitar erro TS
         return Promise.resolve(null as unknown as ServiceWorkerRegistration);
       }
       return originalRegister(scriptURL, options);
@@ -35,7 +36,6 @@ export default function OneSignalClient() {
       console.log("[OneSignal] Inicializando...");
       await OneSignal.init({
         appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd',
-       // safari_web_id: "web.onesignal.auto.25811132-3882-4d1b-a1e7-3632ed052841",
         allowLocalhostAsSecureOrigin: true,
         notifyButton: { enable: true },
         serviceWorkerPath: '/OneSignalSDKWorker.js',

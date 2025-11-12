@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "./providers/auth";
 import Footer from "./_components/footer";
-import ToasterClient from "./_components/ToasterClient"; // Import normal, sem dynamic
+import ToasterClient from "./_components/ToasterClient";
 import OneSignalClient from "./_components/OneSignalClient";
 
 // Fontes
@@ -38,23 +38,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="dark">
       <head>
-        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer dangerouslySetInnerHTML={{
-          __html: `
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        window.OneSignalDeferred.push(async function(OneSignal) {
-          await OneSignal.init({
-            appId: "8e1a7c53-84a0-442f-963d-3bd980a77e1b",
-            safari_web_id: "web.onesignal.auto.25811132-3882-4d1b-a1e7-3632ed052841",
-            allowLocalhostAsSecureOrigin: true,
-            notifyButton: { enable: true },
-            serviceWorkerPath: '/OneSignalSDKWorker.js',
-            serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
-            serviceWorkerParam: { scope: '/' }
-          });
-        });
-      `,
-        }}
-        />
+        {/* ✅ Removido script inline para evitar duplicação */}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
@@ -63,8 +47,8 @@ export default function RootLayout({
             <Footer />
           </div>
         </AuthProvider>
-        <ToasterClient /> {/* Client Component */}
-        <OneSignalClient />
+        <ToasterClient />
+        <OneSignalClient /> {/* Inicialização do OneSignal */}
       </body>
     </html>
   );
