@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Configuração do PWA
+// ✅ Configuração do PWA
 const withPWA = withPWAInit({
   dest: "public",
   register: true,
@@ -61,9 +61,12 @@ const withPWA = withPWAInit({
   ],
 });
 
-const withBundleAnalyzer = require("@next/bundle-analyzer")({
-  enabled: process.env.ANALYZE === "true",
-});
+// ✅ Condicional para evitar erro em produção
+let withBundleAnalyzer = (config: any) => config; // fallback
+if (process.env.ANALYZE === "true") {
+  withBundleAnalyzer = require("@next/bundle-analyzer")({
+    enabled: true,
+  });
+}
 
-// ✅ Corrigindo tipagem
-export default withBundleAnalyzer(withPWA(nextConfig as any));
+export default withBundleAnalyzer(withPWA(nextConfig));
