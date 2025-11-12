@@ -1,11 +1,14 @@
 {
   "name": "Jc Barber App",
-  "short_name": "Jc Barber App",
+  "short_name": "Jc Barber",
   "description": "Agendamento fácil para barbeiros e salões",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#0d6efd",
+  "gcm_sender_id": "482941778795",
   "icons": [
     {
       "src": "/logoOficial.png",
