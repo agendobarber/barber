@@ -22,7 +22,7 @@ export default function OneSignalClient() {
         console.log("[OneSignal] Inicializando...");
         try {
           await OneSignal.init({
-            appId: '8e1a7c53-84a0-442f-963d-3bd980a77e1b',
+            appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd',
             allowLocalhostAsSecureOrigin: true,
             notifyButton: { enable: true },
             serviceWorkerPath: '/OneSignalSDKWorker.js',
