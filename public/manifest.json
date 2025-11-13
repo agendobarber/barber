@@ -2,7 +2,7 @@
   "name": "Jc Barber App",
   "short_name": "Jc Barber",
   "description": "Agendamento fácil para barbeiros e salões",
-  "start_url": "/",
+  "start_url": ".",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -16,7 +16,7 @@
       "type": "image/png"
     },
     {
-      "src": "/logoOficial.png",
+    "src": "/logoOficial.png",
       "sizes": "512x512",
       "type": "image/png"
     }
