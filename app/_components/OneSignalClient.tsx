@@ -24,10 +24,7 @@ export default function OneSignalClient() {
           await OneSignal.init({
             appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd',
             allowLocalhostAsSecureOrigin: true,
-            notifyButton: { enable: true },
-            serviceWorkerPath: '/OneSignalSDKWorker.js',
-            serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
-            serviceWorkerParam: { scope: '/' }
+            notifyButton: { enable: true }
           });
           console.log("[OneSignal] Inicializado com sucesso.");
         } catch (err) {
