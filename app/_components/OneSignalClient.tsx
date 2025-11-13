@@ -23,8 +23,11 @@ export default function OneSignalClient() {
         try {
           await OneSignal.init({
             appId: '8e1a7c53-84a0-442f-963d-3bd980a77e1b',
-           // allowLocalhostAsSecureOrigin: true,
-            notifyButton: { enable: true }
+            // allowLocalhostAsSecureOrigin: true,
+            notifyButton: { enable: true },
+            web: {
+              notificationIcon: '/onesignal-icon.png'
+            }
           });
           console.log("[OneSignal] Inicializado com sucesso.");
         } catch (err) {
