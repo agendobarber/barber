@@ -21,35 +21,12 @@ export default function OneSignalClient() {
       window.OneSignalDeferred.push(async (OneSignal: any) => {
         console.log("[OneSignal] Inicializando...");
         try {
-          // Ativar logs detalhados
-          OneSignal.setLogLevel('debug'); // ou 'trace' para nível máximo
-
           await OneSignal.init({
             appId: '7616b9f5-ce00-466c-a8c4-a6801e1d7bbd',
             allowLocalhostAsSecureOrigin: true,
             notifyButton: { enable: true }
           });
-
           console.log("[OneSignal] Inicializado com sucesso.");
-
-          // Mostrar status da inscrição
-          const isSubscribed = await OneSignal.isPushNotificationsEnabled();
-          console.log(`[OneSignal] Push habilitado? ${isSubscribed}`);
-
-          if (!isSubscribed) {
-            console.warn("[OneSignal] Usuário não inscrito. Tentando inscrever...");
-            await OneSignal.registerForPushNotifications();
-          }
-
-          // Listener para eventos
-          OneSignal.on('subscriptionChange', (isSubscribed: boolean) => {
-            console.log(`[OneSignal] Status de inscrição mudou: ${isSubscribed}`);
-          });
-
-          OneSignal.on('notificationDisplay', (event: any) => {
-            console.log("[OneSignal] Notificação exibida:", event);
-          });
-
         } catch (err) {
           console.error("[OneSignal] Erro no init:", err);
         }
