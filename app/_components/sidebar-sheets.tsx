@@ -30,9 +30,6 @@ interface MenuItem {
 const SidebarSheet = () => {
   const { data } = useSession();
 
-
-  console.table(data);
-
   const role = (data?.user as any)?.role;
   const pathname = usePathname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);

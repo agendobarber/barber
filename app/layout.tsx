@@ -6,7 +6,6 @@ import Footer from "./_components/footer";
 import ToasterClient from "./_components/ToasterClient";
 import OneSignalClient from "./_components/OneSignalClient";
 
-// Fontes
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,29 +16,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Metadados PWA
 export const metadata: Metadata = {
   title: "Jc Barber App",
   description: "Agendamento fácil para barbeiros e salões",
   manifest: "/manifest.json",
   icons: {
     icon: "/logoOficial.png",
-    apple: "/logoOficial.png",
-  },
+    apple: "/logoOficial.png"
+  }
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0d6efd",
+  themeColor: "#0d6efd"
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className="dark">
-      <head>
-        {/* ✅ Removido script inline para evitar duplicação */}
-      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <div className="flex min-h-screen flex-col">
@@ -48,7 +41,7 @@ export default function RootLayout({
           </div>
         </AuthProvider>
         <ToasterClient />
-        <OneSignalClient /> {/* Inicialização do OneSignal */}
+        <OneSignalClient />
       </body>
     </html>
   );
