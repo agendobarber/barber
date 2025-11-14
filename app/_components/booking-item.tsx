@@ -74,28 +74,28 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
       toast.error("Nenhum agendamento encontrado para cancelar.");
       return;
     }
-
-    console.log("CANCELAMENTO AGENDAMENTO")
-
+  
+    console.log("CANCELAMENTO AGENDAMENTO");
+  
     const confirmCancel = confirm(
       `Tem certeza que deseja cancelar ${
         safeIds.length > 1 ? "todos os agendamentos" : "este agendamento"
       }?`
     );
     if (!confirmCancel) return;
-
+  
     try {
       setIsCancelling(true);
-
+  
       // Cancelando os agendamentos no backend
       const res = await fetch(`/api/bookings/cancel-group`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: safeIds }),
       });
-
+  
       if (!res.ok) throw new Error("Erro ao cancelar agendamento");
-
+  
       // Enviar notificação push
       const userId = user?.name;  // Aqui podemos pegar o userId (de quem está cancelando o agendamento)
       if (userId) {
@@ -104,24 +104,29 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: "Agendamento Cancelado",
-            message: `O agendamento de ${user?.name ?? "Cliente desconhecido"} marcado para o horário ${format(bookingDate, "HH:mm", { locale: ptBR })} foi cancelado.`,
+            message: `O agendamento de ${
+              user?.name ?? "Cliente desconhecido"
+            } marcado para o horário ${format(bookingDate, "HH:mm", {
+              locale: ptBR,
+            })} foi cancelado.`,
             userId,
           }),
         });
-
+  
         if (!pushRes.ok) {
           console.error("Erro ao enviar push");
         }
       }
-
+  
+      // Atualizar UI e redirecionar
       toast.success(
         `${safeIds.length > 1 ? "Agendamentos" : "Agendamento"} cancelado${
           safeIds.length > 1 ? "s" : ""
         } com sucesso!`
       );
-
+  
       setIsSheetOpen(false);
-      setTimeout(() => window.location.reload(), 800);
+      setTimeout(() => window.location.reload(), 800); // Aguardar o cancelamento terminar antes de recarregar
     } catch (err) {
       console.error(err);
       toast.error("Não foi possível cancelar o(s) agendamento(s).");
@@ -129,6 +134,7 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
       setIsCancelling(false);
     }
   };
+  
 
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
