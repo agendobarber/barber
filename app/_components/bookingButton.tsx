@@ -88,7 +88,7 @@ const getTimeStatusList = ({
 };
 
 const BookingButton = ({ barbershop }: BookingButtonProps) => {
-  
+
   const { data } = useSession();
   const router = useRouter();
   const { data: session } = useSession();
@@ -239,21 +239,31 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
       try {
         const userId = session?.user && (session.user as any).id;
 
-        // Se não houver usuário ou não houver ID, não tente inicializar o OneSignal
         if (!userId) {
           console.log("[OneSignal] Aguardando sessão com userId...");
           return;
         }
 
-        // Envia um push de teste
+        // Adicionando informações mais detalhadas e personalizadas para o push
+        const customerName = session?.user?.name || "Cliente";  // Ou use o nome do cliente do sistema
+        const formattedDate = selectedDay?.toLocaleDateString('pt-BR', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        const formattedTime = selectedTimes[0]; // Usando o primeiro horário selecionado para o agendamento
+
+        const pushMessage = {
+          title: `Novo agendamento de ${customerName}!`,
+          message: `Você tem um novo agendamento com ${customerName} no dia ${formattedDate} às ${formattedTime}. Não se esqueça de confirmar! 🎉`,
+          userId: userId,
+        };
+
         const res = await fetch("/api/push/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: "Teste de Push!",
-            message: "Seu push está funcionando 🎉",
-            userId: userId, // ID do usuário autenticado
-          }),
+          body: JSON.stringify(pushMessage),
         });
 
         const data = await res.json();
@@ -268,6 +278,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
         console.error("Erro no botão de push:", err);
         console.log("Falha ao enviar push");
       }
+
 
       setSheetOpen(false);
       setSelectedDay(undefined);
@@ -371,20 +382,20 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
                     Nenhum horário disponível para este dia.
                   </p>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {statusList.map(({ time, disabled }) => (
-                      <Button
-                        key={time}
-                        variant={selectedTimes.includes(time) ? "default" : "outline"}
-                        className={`rounded-full ${disabled ? "opacity-50" : ""}`}
-                        onClick={() => handleTimeClick(time)}
-                        disabled={disabled}
-                      >
-                        {time}
-                      </Button>
-                    ))}
-                  </div>
-                )}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {statusList.map(({ time, disabled }) => (
+                        <Button
+                          key={time}
+                          variant={selectedTimes.includes(time) ? "default" : "outline"}
+                          className={`rounded-full ${disabled ? "opacity-50" : ""}`}
+                          onClick={() => handleTimeClick(time)}
+                          disabled={disabled}
+                        >
+                          {time}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
               </div>
             )}
           </div>
