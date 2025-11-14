@@ -17,7 +17,7 @@ export default function OneSignalClient() {
   useEffect(() => {
     const userId = session?.user && (session.user as any).id;
 
-    // se não tiver usuario ou não tiver id → nem tenta
+    // Se não houver usuário ou não houver ID, não tente inicializar o OneSignal
     if (!userId) {
       console.log("[OneSignal] Aguardando sessão com userId...");
       return;
@@ -25,6 +25,7 @@ export default function OneSignalClient() {
 
     if (typeof window === "undefined") return;
 
+    // Impede múltiplas inicializações
     if (window.OneSignalInitialized || initCalled.current) {
       console.log("[OneSignal] Já inicializado. Ignorando...");
       return;
@@ -34,6 +35,7 @@ export default function OneSignalClient() {
 
     console.log("[OneSignal] Carregando SDK...");
 
+    // Carrega o script do OneSignal
     const script = document.createElement("script");
     script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
     script.async = true;
@@ -67,9 +69,34 @@ export default function OneSignalClient() {
           window.OneSignalInitialized = true;
           console.log("[OneSignal] Inicialização concluída.");
 
-          // usa o userId de forma segura!!
+          // Adiciona a tag com o ID do usuário
           await OneSignal.User.addTag("userId", userId);
           console.log("[OneSignal] Tag userId adicionada:", userId);
+
+          try {
+            // Envia um push de teste
+            const res = await fetch("/api/push/send", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                title: "Teste de Push!",
+                message: "Seu push está funcionando 🎉",
+                userId: userId, // ID do usuário autenticado
+              }),
+            });
+
+            const data = await res.json();
+            console.log("Resposta do servidor:", data);
+
+            if (res.ok) {
+              console.log("Push enviado com sucesso!");
+            } else {
+              console.log("Erro ao enviar push: " + data.error);
+            }
+          } catch (err) {
+            console.error("Erro no botão de push:", err);
+            console.log("Falha ao enviar push");
+          }
 
         } catch (error) {
           console.error("[OneSignal] Erro no init:", error);
