@@ -1,17 +1,39 @@
-'use client';
-import { useEffect } from "react";
+"use client";
+
+import { useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 
 declare global {
   interface Window {
     OneSignalDeferred: any[];
+    OneSignalInitialized?: boolean;
   }
 }
 
 export default function OneSignalClient() {
+  const { data: session } = useSession();
+  const initCalled = useRef(false);
+
   useEffect(() => {
+    const userId = session?.user && (session.user as any).id;
+
+    // se não tiver usuario ou não tiver id → nem tenta
+    if (!userId) {
+      console.log("[OneSignal] Aguardando sessão com userId...");
+      return;
+    }
+
     if (typeof window === "undefined") return;
 
-    // Load OneSignal SDK
+    if (window.OneSignalInitialized || initCalled.current) {
+      console.log("[OneSignal] Já inicializado. Ignorando...");
+      return;
+    }
+
+    initCalled.current = true;
+
+    console.log("[OneSignal] Carregando SDK...");
+
     const script = document.createElement("script");
     script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
     script.async = true;
@@ -22,38 +44,33 @@ export default function OneSignalClient() {
       window.OneSignalDeferred = window.OneSignalDeferred || [];
 
       window.OneSignalDeferred.push(async (OneSignal: any) => {
+        if (window.OneSignalInitialized) {
+          console.log("[OneSignal] Já estava iniciado.");
+          return;
+        }
+
         console.log("[OneSignal] Inicializando OneSignal...");
 
         try {
           await OneSignal.init({
-            appId: "8e1a7c53-84a0-442f-963d-3bd980a77e1b",
-            safari_web_id: "web.onesignal.auto.25811132-3882-4d1b-a1e7-3632ed052841",
-
-            notifyButton: {
-              enable: true,
-            },
-
-            // 🔥 ESSENCIAL: garante que o browser use seus workers corretos
+            appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
+            notifyButton: { enable: true },
             serviceWorkerParam: { scope: "/" },
             serviceWorkerPath: "OneSignalSDKWorker.js",
             serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js",
-
-            // 🔥 ESSENCIAL: o ícone QUEBRA push se não estiver aqui!
             subscriptionOptions: {
-              web: {
-                notificationIcon: "/onesignal-icon.png",
-              },
+              web: { notificationIcon: "/onesignal-icon.png" },
             },
-
-            // Opcional, mas recomendado
-            promptOptions: {
-              slidedown: {
-                enabled: true,
-              },
-            },
+            promptOptions: { slidedown: { enabled: true } },
           });
 
+          window.OneSignalInitialized = true;
           console.log("[OneSignal] Inicialização concluída.");
+
+          // usa o userId de forma segura!!
+          await OneSignal.User.addTag("userId", userId);
+          console.log("[OneSignal] Tag userId adicionada:", userId);
+
         } catch (error) {
           console.error("[OneSignal] Erro no init:", error);
         }
@@ -61,7 +78,7 @@ export default function OneSignalClient() {
     };
 
     document.head.appendChild(script);
-  }, []);
+  }, [session]);
 
   return null;
 }
