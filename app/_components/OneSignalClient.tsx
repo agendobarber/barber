@@ -15,17 +15,18 @@ export default function OneSignalClient() {
   const initCalled = useRef(false);
 
   useEffect(() => {
-    // só segue se existir user logado **com ID**
-    if (!session?.user?.id) {
-      console.log("[OneSignal] Sem sessão ou sem userId. Aguardando login...");
+    const userId = session?.user && (session.user as any).id;
+
+    // se não tiver usuario ou não tiver id → nem tenta
+    if (!userId) {
+      console.log("[OneSignal] Aguardando sessão com userId...");
       return;
     }
 
     if (typeof window === "undefined") return;
 
-    // evita reinicialização
     if (window.OneSignalInitialized || initCalled.current) {
-      console.log("[OneSignal] Já iniciado anteriormente. Ignorando...");
+      console.log("[OneSignal] Já inicializado. Ignorando...");
       return;
     }
 
@@ -44,7 +45,7 @@ export default function OneSignalClient() {
 
       window.OneSignalDeferred.push(async (OneSignal: any) => {
         if (window.OneSignalInitialized) {
-          console.log("[OneSignal] SDK já estava inicializado.");
+          console.log("[OneSignal] Já estava iniciado.");
           return;
         }
 
@@ -66,9 +67,9 @@ export default function OneSignalClient() {
           window.OneSignalInitialized = true;
           console.log("[OneSignal] Inicialização concluída.");
 
-          // marca o usuário no OneSignal
-          await OneSignal.User.addTag("userId", session.user.id);
-          console.log("[OneSignal] Tag userId adicionada ao usuário:", session.user.id);
+          // usa o userId de forma segura!!
+          await OneSignal.User.addTag("userId", userId);
+          console.log("[OneSignal] Tag userId adicionada:", userId);
 
         } catch (error) {
           console.error("[OneSignal] Erro no init:", error);
@@ -77,7 +78,7 @@ export default function OneSignalClient() {
     };
 
     document.head.appendChild(script);
-  }, [session?.user?.id]);
+  }, [session]);
 
   return null;
 }
