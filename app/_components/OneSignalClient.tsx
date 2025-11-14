@@ -17,10 +17,6 @@ export default function OneSignalClient() {
   useEffect(() => {
     const userId = session?.user && (session.user as any).id;
 
-    console.log("OEEEEEEEE");
-    console.table(session)
-    console.log(session?.user && (session.user as any).role);
-
     // Se não houver usuário ou não houver ID, não tente inicializar o OneSignal
     if (!userId) {
       console.log("[OneSignal] Aguardando sessão com userId...");

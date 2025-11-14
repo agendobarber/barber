@@ -250,8 +250,8 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title: "Teste de Push!",
-            message: "Seu push está funcionando 🎉",
+            title: "Novo agendamento!",
+            message: "Consulte o calendário no app",
             userId: userId, // ID do usuário autenticado
           }),
         });
