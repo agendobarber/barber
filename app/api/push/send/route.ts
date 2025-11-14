@@ -1,7 +1,9 @@
+import { Console } from "console";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
+    console.log("AOKEKOAEAO");
     const body = await req.json();
     const { title, message, userId } = body;
 
@@ -15,6 +17,9 @@ export async function POST(req: Request) {
     const apiKey = process.env.ONESIGNAL_REST_API_KEY;
     const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
 
+    console.log("API KEY DO CARALHOOO");
+    console.log(apiKey);
+
     if (!apiKey || !appId) {
       return NextResponse.json(
         { error: "Chaves do OneSignal não configuradas" },
@@ -27,7 +32,7 @@ export async function POST(req: Request) {
       headings: { en: title },
       contents: { en: message },
       filters: [
-        { field: "perfil", key: "admin", relation: "=", value: "admin" }
+        { field: "tag", key: "perfil", relation: "=", value: "admin" }
       ],
     };
 
