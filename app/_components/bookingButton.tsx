@@ -229,48 +229,59 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
     }
 
     try {
-      const userId = session?.user && (session.user as any).id;
-    
-      if (!userId) {
-        console.log("[OneSignal] Aguardando sessão com userId...");
-        return;
+      const [hour, minute] = selectedTimes[0].split(":").map(Number);
+      const bookingDate = setHours(setMinutes(selectedDay, minute), hour);
+
+      await createBooking({ serviceIds: selectedServices, date: bookingDate, professionalId: selectedProfessional });
+
+      toast.success("💈 Reserva criada com sucesso!");
+
+      try {
+        const userId = session?.user && (session.user as any).id;
+
+        // Se não houver usuário ou não houver ID, não tente inicializar o OneSignal
+        if (!userId) {
+          console.log("[OneSignal] Aguardando sessão com userId...");
+          return;
+        }
+
+        // Envia um push de teste
+        const res = await fetch("/api/push/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: "Teste de Push!",
+            message: "Seu push está funcionando 🎉",
+            userId: userId, // ID do usuário autenticado
+          }),
+        });
+
+        const data = await res.json();
+        console.log("Resposta do servidor:", data);
+
+        if (res.ok) {
+          console.log("Push enviado com sucesso!");
+        } else {
+          console.log("Erro ao enviar push: " + data.error);
+        }
+      } catch (err) {
+        console.error("Erro no botão de push:", err);
+        console.log("Falha ao enviar push");
       }
-    
-      // Adicionando informações mais detalhadas e personalizadas para o push
-      const customerName = session?.user?.name || "Cliente";  // Ou use o nome do cliente do sistema
-      const formattedDate = selectedDay?.toLocaleDateString('pt-BR', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      const formattedTime = selectedTimes[0]; // Usando o primeiro horário selecionado para o agendamento
-    
-      const pushMessage = {
-        title: `Novo agendamento de ${customerName}!`,
-        message: `Você tem um novo agendamento com ${customerName} no dia ${formattedDate} às ${formattedTime}.`,
-        userId: userId,
-      };
-    
-      const res = await fetch("/api/push/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pushMessage),
-      });
-    
-      const data = await res.json();
-      console.log("Resposta do servidor:", data);
-    
-      if (res.ok) {
-        console.log("Push enviado com sucesso!");
-      } else {
-        console.log("Erro ao enviar push: " + data.error);
-      }
+
+      setSheetOpen(false);
+      setSelectedDay(undefined);
+      setSelectedTimes([]);
+      setSelectedServices([]);
+      setSelectedProfessional(null);
+      setDayBookings([]);
+      setProfessionalSchedules([]);
+      setProfessionalServices([]);
+      router.push(`/`);
     } catch (err) {
-      console.error("Erro no botão de push:", err);
-      console.log("Falha ao enviar push");
+      console.error(err);
+      toast.error("❌ Erro ao criar a reserva.");
     }
-    
   };
 
   const statusList = useMemo(() => {
