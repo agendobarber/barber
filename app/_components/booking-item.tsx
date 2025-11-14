@@ -75,6 +75,8 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
       return;
     }
 
+    console.log("CANCELAMENTO AGENDAMENTO")
+
     const confirmCancel = confirm(
       `Tem certeza que deseja cancelar ${
         safeIds.length > 1 ? "todos os agendamentos" : "este agendamento"
