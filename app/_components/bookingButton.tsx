@@ -256,7 +256,7 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
 
         const pushMessage = {
           title: `Novo agendamento de ${customerName}!`,
-          message: `Você tem um novo agendamento com ${customerName} no dia ${formattedDate} às ${formattedTime}. Não se esqueça de confirmar! 🎉`,
+          message: `Você tem um novo agendamento com ${customerName} no dia ${formattedDate} às ${formattedTime}.`,
           userId: userId,
         };
 
