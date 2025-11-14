@@ -1,16 +1,11 @@
-'use client';
-import { useEffect } from "react";
-
-declare global {
-  interface Window {
-    OneSignalDeferred: any[];
-  }
-}
 
 export default function OneSignalClient() {
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     if (typeof window === "undefined") return;
 
+    // Carregar SDK do OneSignal
+    const script = document.createElement('script');
     // Load OneSignal SDK
     const script = document.createElement("script");
     script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
@@ -22,12 +17,19 @@ export default function OneSignalClient() {
       window.OneSignalDeferred = window.OneSignalDeferred || [];
 
       window.OneSignalDeferred.push(async (OneSignal: any) => {
+        console.log("[OneSignal] Inicializando...");
         console.log("[OneSignal] Inicializando OneSignal...");
 
         try {
           await OneSignal.init({
-            appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
-            safari_web_id: process.env.NEXT_PUBLIC_ONESIGNAL_SAFARI_WEB_ID,
+            appId: '8e1a7c53-84a0-442f-963d-3bd980a77e1b',
+            // allowLocalhostAsSecureOrigin: true,
+            notifyButton: { enable: true },
+            web: {
+              notificationIcon: '/onesignal-icon.png'
+            }
+              appId: "8e1a7c53-84a0-442f-963d-3bd980a77e1b",
+            safari_web_id: "web.onesignal.auto.25811132-3882-4d1b-a1e7-3632ed052841",
 
             notifyButton: {
               enable: true,
@@ -52,6 +54,9 @@ export default function OneSignalClient() {
               },
             },
           });
+          console.log("[OneSignal] Inicializado com sucesso.");
+        } catch (err) {
+          console.error("[OneSignal] Erro no init:", err);
 
           console.log("[OneSignal] Inicialização concluída.");
         } catch (error) {
@@ -65,3 +70,4 @@ export default function OneSignalClient() {
 
   return null;
 }
+  }
