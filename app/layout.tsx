@@ -35,13 +35,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
+          <OneSignalClient />
           <div className="flex min-h-screen flex-col">
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
         </AuthProvider>
         <ToasterClient />
-        <OneSignalClient />
       </body>
     </html>
   );
