@@ -73,30 +73,7 @@ export default function OneSignalClient() {
           await OneSignal.User.addTag("userId", userId);
           console.log("[OneSignal] Tag userId adicionada:", userId);
 
-          try {
-            // Envia um push de teste
-            const res = await fetch("/api/push/send", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                title: "Teste de Push!",
-                message: "Seu push está funcionando 🎉",
-                userId: userId, // ID do usuário autenticado
-              }),
-            });
-
-            const data = await res.json();
-            console.log("Resposta do servidor:", data);
-
-            if (res.ok) {
-              console.log("Push enviado com sucesso!");
-            } else {
-              console.log("Erro ao enviar push: " + data.error);
-            }
-          } catch (err) {
-            console.error("Erro no botão de push:", err);
-            console.log("Falha ao enviar push");
-          }
+          
 
         } catch (error) {
           console.error("[OneSignal] Erro no init:", error);

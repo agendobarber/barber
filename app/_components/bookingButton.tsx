@@ -88,8 +88,10 @@ const getTimeStatusList = ({
 };
 
 const BookingButton = ({ barbershop }: BookingButtonProps) => {
+  
   const { data } = useSession();
   const router = useRouter();
+  const { data: session } = useSession();
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [signInDialogOpen, setSignInDialogOpen] = useState(false);
@@ -233,6 +235,40 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
       await createBooking({ serviceIds: selectedServices, date: bookingDate, professionalId: selectedProfessional });
 
       toast.success("💈 Reserva criada com sucesso!");
+
+      try {
+        const userId = session?.user && (session.user as any).id;
+
+        // Se não houver usuário ou não houver ID, não tente inicializar o OneSignal
+        if (!userId) {
+          console.log("[OneSignal] Aguardando sessão com userId...");
+          return;
+        }
+
+        // Envia um push de teste
+        const res = await fetch("/api/push/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: "Teste de Push!",
+            message: "Seu push está funcionando 🎉",
+            userId: userId, // ID do usuário autenticado
+          }),
+        });
+
+        const data = await res.json();
+        console.log("Resposta do servidor:", data);
+
+        if (res.ok) {
+          console.log("Push enviado com sucesso!");
+        } else {
+          console.log("Erro ao enviar push: " + data.error);
+        }
+      } catch (err) {
+        console.error("Erro no botão de push:", err);
+        console.log("Falha ao enviar push");
+      }
+
       setSheetOpen(false);
       setSelectedDay(undefined);
       setSelectedTimes([]);
