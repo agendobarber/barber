@@ -84,7 +84,7 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
 
     try {
       setIsCancelling(true);
-      
+
       // Cancelando os agendamentos no backend
       const res = await fetch(`/api/bookings/cancel-group`, {
         method: "PATCH",
@@ -102,7 +102,7 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: "Agendamento Cancelado",
-            message: `O agendamento de ${services.map(service => service.name).join(', ')} foi cancelado.`,
+            message: `O agendamento de ${user?.name ?? "Cliente desconhecido"} marcado para o horário ${format(bookingDate, "HH:mm", { locale: ptBR })} foi cancelado.`,
             userId,
           }),
         });
