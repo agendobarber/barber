@@ -17,6 +17,10 @@ export default function OneSignalClient() {
   useEffect(() => {
     const userId = session?.user && (session.user as any).id;
 
+    console.log("OEEEEEEEE");
+    console.table(session)
+    console.log(session?.user && (session.user as any).role);
+
     // Se não houver usuário ou não houver ID, não tente inicializar o OneSignal
     if (!userId) {
       console.log("[OneSignal] Aguardando sessão com userId...");
@@ -70,7 +74,13 @@ export default function OneSignalClient() {
           console.log("[OneSignal] Inicialização concluída.");
 
           // Adiciona a tag com o ID do usuário
-          await OneSignal.User.addTag("userId", userId);
+          //await OneSignal.User.addTag("userId", userId);
+
+          if(session?.user && (session.user as any).role === 'admin'){
+            console.log("adicionar tag de admin")
+            await OneSignal.User.addTag("perfil", "admin");
+          }
+
           console.log("[OneSignal] Tag userId adicionada:", userId);
 
           
