@@ -97,6 +97,28 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
           safeIds.length > 1 ? "s" : ""
         } com sucesso!`
       );
+
+       const pushMessage = {
+          title: `Cancelamento!`,
+          message: `Cancelamento111`,
+          userId: 222,
+        };
+
+        const res2 = await fetch("/api/push/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(pushMessage),
+        });
+
+        const data = await res2.json();
+        console.log("Resposta do servidor:", data);
+
+        if (res2.ok) {
+          console.log("Push enviado com sucesso!");
+        } else {
+          console.log("Erro ao enviar push: " + data.error);
+        }
+
       setIsSheetOpen(false);
       setTimeout(() => window.location.reload(), 800);
     } catch (err) {
