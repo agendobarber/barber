@@ -28,7 +28,7 @@ interface BookingGroup {
   barbershop: { id: string; name: string; imageUrl: string };
   professional?: { name: string };
   services: BookingService[];
-  user?: { name?: string };
+  user?: { name?: string; id?: string }; // Aqui foi adicionado 'id'
   status?: number; // opcional para status geral
 }
 
@@ -98,26 +98,31 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
         } com sucesso!`
       );
 
-       const pushMessage = {
-          title: `Cancelamento!`,
-          message: `Cancelamento111`,
-          userId: 222,
-        };
+      // Envio do push notification com as informações de cancelamento
+      const pushMessage = {
+        title: "Agendamento Cancelado",
+        message: `${user?.name ?? "Usuário desconhecido"} cancelou o agendamento de ${format(
+          bookingDate,
+          "HH:mm",
+          { locale: ptBR }
+        )} na ${barbershop.name}`,
+        userId: user?.id, // ou outro identificador do usuário, se necessário
+      };
 
-        const res2 = await fetch("/api/push/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(pushMessage),
-        });
+      const res2 = await fetch("/api/push/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pushMessage),
+      });
 
-        const data = await res2.json();
-        console.log("Resposta do servidor:", data);
+      const data = await res2.json();
+      console.log("Resposta do servidor:", data);
 
-        if (res2.ok) {
-          console.log("Push enviado com sucesso!");
-        } else {
-          console.log("Erro ao enviar push: " + data.error);
-        }
+      if (res2.ok) {
+        console.log("Push enviado com sucesso!");
+      } else {
+        console.log("Erro ao enviar push: " + data.error);
+      }
 
       setIsSheetOpen(false);
       setTimeout(() => window.location.reload(), 800);
