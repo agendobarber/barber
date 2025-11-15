@@ -63,14 +63,12 @@ export default async function DashboardPage() {
     orderBy: { date: "asc" },
   });
 
-  const totalBookings = bookingsRaw.length;
-
   // **Contagem de Clientes com Role 'user' e a partir de 2025-10-22**
   const uniqueClients = await db.user.count({
     where: {
       role: "user",  // Somente usuários com a role 'user'
       createdAt: { gte: new Date("2025-10-22") }, // Filtro para usuários criados a partir de 2025-10-22
-      email: { not: "cliente@gmail.com" } // Exclui o cliente com o e-mail "cliente@gmail.com"
+      email: { not: "cliente7@gmail.com" } // Exclui o cliente com o e-mail "cliente7@gmail.com"
     },
   });
 
@@ -87,36 +85,34 @@ export default async function DashboardPage() {
       return acc + totalBookingPrice;
     }, 0);
 
-  // Calcular Taxa de Ocupação (exemplo com número fixo de horários disponíveis)
-  const totalAvailableSlots = 120; // Exemplo de número de horários totais disponíveis no mês (pode ser ajustado dinamicamente com base nos horários de funcionamento)
-  const occupancyRate = ((totalBookings / totalAvailableSlots) * 100).toFixed(2);
-
-  const sanitizedBookings = bookingsRaw.map((b) => {
-    const firstService = b.services[0]?.service;
-    return {
-      id: b.id,
-      date: b.date,
-      user: { name: b.user.name },
-      professional: b.professional
-        ? { id: b.professional.id, name: b.professional.name }
-        : null,
-      barbershop: firstService
-        ? {
-          id: firstService.barbershop.id,
-          name: firstService.barbershop.name,
-          imageUrl: firstService.barbershop.imageUrl,
-        }
-        : { id: "", name: "Sem barbearia", imageUrl: "" },
-      services: b.services.map((s) => ({
-        name: s.service.name,
-        price: Number(s.service.price),
-        status: b.status, // 🔥 usa o status do booking, não do pivot
-      })),
-      status: b.status,
-      key: b.id,
-      ids: [b.id],
-    };
-  });
+  const sanitizedBookings = bookingsRaw
+    .filter((b) => b.user.email !== "cliente7@gmail.com")  // Exclui o cliente com o e-mail "cliente7@gmail.com" dos agendamentos
+    .map((b) => {
+      const firstService = b.services[0]?.service;
+      return {
+        id: b.id,
+        date: b.date,
+        user: { name: b.user.name },
+        professional: b.professional
+          ? { id: b.professional.id, name: b.professional.name }
+          : null,
+        barbershop: firstService
+          ? {
+              id: firstService.barbershop.id,
+              name: firstService.barbershop.name,
+              imageUrl: firstService.barbershop.imageUrl,
+            }
+          : { id: "", name: "Sem barbearia", imageUrl: "" },
+        services: b.services.map((s) => ({
+          name: s.service.name,
+          price: Number(s.service.price),
+          status: b.status, // 🔥 usa o status do booking, não do pivot
+        })),
+        status: b.status,
+        key: b.id,
+        ids: [b.id],
+      };
+    });
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
