@@ -46,10 +46,14 @@ export default async function DashboardPage() {
   const barbershopId = user.barbershopId;
 
   // Cálculo do total de agendamentos, clientes e agendamentos do mês
+  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999); // Até o final do dia de hoje
+
   const bookingsRaw = await db.booking.findMany({
     where: {
       services: { some: { service: { barbershopId } } },
-      date: { gte: new Date() },  // Filtrando agendamentos do futuro
+      date: { gte: startOfMonth, lte: endOfToday },  // Filtrando agendamentos dentro do mês atual até hoje
     },
     include: {
       user: true,
@@ -61,34 +65,27 @@ export default async function DashboardPage() {
 
   const totalBookings = bookingsRaw.length;
 
-  // Contagem de clientes únicos (depois de garantir que o cliente não esteja duplicado)
-  const uniqueClients = new Set(bookingsRaw.map((b) => b.userId)).size;
+  // **Contagem de Clientes com Role 'user'**:
+  const uniqueClients = await db.user.count({
+    where: {
+      role: "user",  // Somente usuários com a role 'user'
+    },
+  });
 
-  // Cálculo de agendamentos no mês
-  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-  const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
-  const bookingsThisMonth = bookingsRaw.filter(
-    (booking) => booking.date >= startOfMonth && booking.date <= endOfMonth
-  ).length;
-
-  // Cálculo do valor total de agendamentos DO MÊS
-  // Cálculo do valor total de agendamentos confirmados DO MÊS até a data atual
+  // Cálculo do valor total de agendamentos DO MÊS até a data atual (somente confirmados)
   const totalRevenueThisMonth = bookingsRaw
-    .filter((booking) => {
-      const bookingDate = new Date(booking.date);
-      const isInThisMonth = bookingDate >= startOfMonth && bookingDate <= endOfMonth;
-      const isConfirmed = booking.status === 1;  // Verifica se o agendamento está confirmado
-      const isBeforeNow = bookingDate <= new Date();  // Verifica se o agendamento é até a data atual
-      return isInThisMonth && isConfirmed && isBeforeNow; // Filtra os agendamentos confirmados no mês até hoje
-    })
+    .filter((booking) => booking.status === 1)  // Filtra apenas agendamentos confirmados
     .reduce((acc, booking) => {
-      return acc + booking.services.reduce((serviceAcc, service) => {
-        return serviceAcc + parseFloat(service.service.price.toString()); // Soma o preço dos serviços
+      // Calcula o total do valor dos serviços de cada agendamento (sem duplicação)
+      const totalBookingPrice = booking.services.reduce((serviceAcc, service) => {
+        return serviceAcc + parseFloat(service.service.price.toString());
       }, 0);
+
+      // Somamos o valor total de cada agendamento ao total geral
+      return acc + totalBookingPrice;
     }, 0);
 
-
-  // Calcular Taxa de Ocupação
+  // Calcular Taxa de Ocupação (exemplo com número fixo de horários disponíveis)
   const totalAvailableSlots = 120; // Exemplo de número de horários totais disponíveis no mês (pode ser ajustado dinamicamente com base nos horários de funcionamento)
   const occupancyRate = ((totalBookings / totalAvailableSlots) * 100).toFixed(2);
 
