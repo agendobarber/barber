@@ -86,7 +86,7 @@ export default async function DashboardPage() {
     }, 0);
 
   const sanitizedBookings = bookingsRaw
-    .filter((b) => b.user.email !== "cliente7@gmail.com")  // Exclui o cliente com o e-mail "cliente7@gmail.com" dos agendamentos
+    //.filter((b) => b.user.email !== "cliente7@gmail.com")  // Exclui o cliente com o e-mail "cliente7@gmail.com" dos agendamentos
     .map((b) => {
       const firstService = b.services[0]?.service;
       return {
