@@ -65,10 +65,12 @@ export default async function DashboardPage() {
 
   const totalBookings = bookingsRaw.length;
 
-  // **Contagem de Clientes com Role 'user'**:
+  // **Contagem de Clientes com Role 'user' e a partir de 2025-10-22**
   const uniqueClients = await db.user.count({
     where: {
       role: "user",  // Somente usuários com a role 'user'
+      createdAt: { gte: new Date("2025-10-22") }, // Filtro para usuários criados a partir de 2025-10-22
+      email: { not: "cliente@gmail.com" } // Exclui o cliente com o e-mail "cliente@gmail.com"
     },
   });
 
