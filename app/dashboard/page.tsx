@@ -131,7 +131,7 @@ export default async function DashboardPage() {
 
           {/* Valor Total de Agendamentos no Mês */}
           <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
-            <FaMoneyBillWave className="text-3xl text-purple-600 mb-2" />
+            <FaMoneyBillWave className="text-3xl text-green-600 mb-2" />
             <h3 className="text-lg font-semibold text-gray-800">Receita do Mês</h3>
             <p className="text-3xl font-bold text-gray-700">
               R$ {totalRevenueThisMonth.toFixed(2)}
