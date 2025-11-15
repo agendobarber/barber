@@ -370,6 +370,8 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
                   mode="single"
                   locale={ptBR}
                   className="w-full text-sm"
+                  // Desabilitar as datas passadas
+                  disabled={(date) => isPast(date)}
                 />
               </div>
             )}
