@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../_lib/auth";
 import BarberCalendar from "../_components/BarberCalendar";
 import { requireRole } from "../_lib/requireRole";
-import { FaCalendarAlt, FaUsers, FaChartLine, FaMoneyBillWave } from 'react-icons/fa';  // Ícones
+import { FaCalendarAlt, FaUsers, FaChartLine, FaMoneyBillWave } from 'react-icons/fa';
 
 export default async function DashboardPage() {
   await requireRole("admin"); // bloqueia usuário comum
@@ -45,15 +45,16 @@ export default async function DashboardPage() {
 
   const barbershopId = user.barbershopId;
 
-  // Cálculo do total de agendamentos, clientes e agendamentos do mês
+  // Datas do mês atual
   const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999); // Até o final do dia de hoje
+  endOfToday.setHours(23, 59, 59, 999);
 
+  // Agendamentos do mês
   const bookingsRaw = await db.booking.findMany({
     where: {
       services: { some: { service: { barbershopId } } },
-      date: { gte: startOfMonth, lte: endOfToday },  // Filtrando agendamentos dentro do mês atual até hoje
+      date: { gte: startOfMonth, lte: endOfToday },
     },
     include: {
       user: true,
@@ -63,30 +64,28 @@ export default async function DashboardPage() {
     orderBy: { date: "asc" },
   });
 
-  // **Contagem de Clientes com Role 'user' e a partir de 2025-10-22**
+  // Clientes únicos (ignora cliente7@gmail.com)
   const uniqueClients = await db.user.count({
     where: {
-      role: "user",  // Somente usuários com a role 'user'
-      createdAt: { gte: new Date("2025-10-22") }, // Filtro para usuários criados a partir de 2025-10-22
-      email: { not: "cliente7@gmail.com" } // Exclui o cliente com o e-mail "cliente7@gmail.com"
+      role: "user",
+      createdAt: { gte: new Date("2025-10-22") },
+      email: { not: "cliente7@gmail.com" },
     },
   });
 
-  // Cálculo do valor total de agendamentos DO MÊS até a data atual (somente confirmados)
+  // Receita do mês (ignora cliente7@gmail.com)
   const totalRevenueThisMonth = bookingsRaw
-    .filter((booking) => booking.status === 1)  // Filtra apenas agendamentos confirmados
+    .filter((booking) => booking.status === 1 && booking.user.email !== "cliente7@gmail.com")
     .reduce((acc, booking) => {
-      // Calcula o total do valor dos serviços de cada agendamento (sem duplicação)
       const totalBookingPrice = booking.services.reduce((serviceAcc, service) => {
         return serviceAcc + parseFloat(service.service.price.toString());
       }, 0);
-
-      // Somamos o valor total de cada agendamento ao total geral
       return acc + totalBookingPrice;
     }, 0);
 
+  // Agendamentos para o calendário (ignora cliente7@gmail.com)
   const sanitizedBookings = bookingsRaw
-    //.filter((b) => b.user.email !== "cliente7@gmail.com")  // Exclui o cliente com o e-mail "cliente7@gmail.com" dos agendamentos
+    .filter((b) => b.user.email !== "cliente7@gmail.com")
     .map((b) => {
       const firstService = b.services[0]?.service;
       return {
@@ -106,7 +105,7 @@ export default async function DashboardPage() {
         services: b.services.map((s) => ({
           name: s.service.name,
           price: Number(s.service.price),
-          status: b.status, // 🔥 usa o status do booking, não do pivot
+          status: b.status,
         })),
         status: b.status,
         key: b.id,
@@ -118,16 +117,13 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="flex-1 flex flex-col p-5 md:p-10">
-        {/* Segunda Linha com 2 indicadores */}
         <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Quantidade de Clientes */}
           <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
             <FaUsers className="text-3xl text-yellow-600 mb-2" />
             <h3 className="text-lg font-semibold text-gray-800">Clientes</h3>
             <p className="text-3xl font-bold text-gray-700">{uniqueClients}</p>
           </div>
 
-          {/* Valor Total de Agendamentos no Mês */}
           <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
             <FaMoneyBillWave className="text-3xl text-green-600 mb-2" />
             <h3 className="text-lg font-semibold text-gray-800">Receita do Mês</h3>
@@ -137,7 +133,6 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Calendário de Agendamentos */}
         <BarberCalendar bookings={sanitizedBookings} />
       </main>
     </div>
