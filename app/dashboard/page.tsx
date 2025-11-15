@@ -125,14 +125,14 @@ export default async function DashboardPage() {
           {/* Quantidade de Clientes */}
           <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
             <FaUsers className="text-3xl text-yellow-600 mb-2" />
-            <h3 className="text-lg font-semibold text-gray-800">Quantidade de Clientes</h3>
+            <h3 className="text-lg font-semibold text-gray-800">Clientes</h3>
             <p className="text-3xl font-bold text-gray-700">{uniqueClients}</p>
           </div>
 
           {/* Valor Total de Agendamentos no Mês */}
           <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
             <FaMoneyBillWave className="text-3xl text-purple-600 mb-2" />
-            <h3 className="text-lg font-semibold text-gray-800">Valor Total de Agendamentos no Mês</h3>
+            <h3 className="text-lg font-semibold text-gray-800">Receita do Mês</h3>
             <p className="text-3xl font-bold text-gray-700">
               R$ {totalRevenueThisMonth.toFixed(2)}
             </p>
