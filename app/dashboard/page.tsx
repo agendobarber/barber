@@ -72,13 +72,21 @@ export default async function DashboardPage() {
   ).length;
 
   // Cálculo do valor total de agendamentos DO MÊS
+  // Cálculo do valor total de agendamentos confirmados DO MÊS até a data atual
   const totalRevenueThisMonth = bookingsRaw
-    .filter((booking) => booking.date >= startOfMonth && booking.date <= endOfMonth) // Filtra agendamentos do mês
+    .filter((booking) => {
+      const bookingDate = new Date(booking.date);
+      const isInThisMonth = bookingDate >= startOfMonth && bookingDate <= endOfMonth;
+      const isConfirmed = booking.status === 1;  // Verifica se o agendamento está confirmado
+      const isBeforeNow = bookingDate <= new Date();  // Verifica se o agendamento é até a data atual
+      return isInThisMonth && isConfirmed && isBeforeNow; // Filtra os agendamentos confirmados no mês até hoje
+    })
     .reduce((acc, booking) => {
       return acc + booking.services.reduce((serviceAcc, service) => {
-        return serviceAcc + parseFloat(service.service.price.toString());
+        return serviceAcc + parseFloat(service.service.price.toString()); // Soma o preço dos serviços
       }, 0);
     }, 0);
+
 
   // Calcular Taxa de Ocupação
   const totalAvailableSlots = 120; // Exemplo de número de horários totais disponíveis no mês (pode ser ajustado dinamicamente com base nos horários de funcionamento)
@@ -95,10 +103,10 @@ export default async function DashboardPage() {
         : null,
       barbershop: firstService
         ? {
-            id: firstService.barbershop.id,
-            name: firstService.barbershop.name,
-            imageUrl: firstService.barbershop.imageUrl,
-          }
+          id: firstService.barbershop.id,
+          name: firstService.barbershop.name,
+          imageUrl: firstService.barbershop.imageUrl,
+        }
         : { id: "", name: "Sem barbearia", imageUrl: "" },
       services: b.services.map((s) => ({
         name: s.service.name,
