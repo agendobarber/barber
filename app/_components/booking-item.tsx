@@ -28,7 +28,7 @@ interface BookingGroup {
   barbershop: { id: string; name: string; imageUrl: string };
   professional?: { name: string };
   services: BookingService[];
-  user?: { name?: string; id?: string }; // Aqui foi adicionado 'id'
+  user?: { name?: string };
   status?: number; // opcional para status geral
 }
 
@@ -77,7 +77,7 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
 
     const confirmCancel = confirm(
       `Tem certeza que deseja cancelar ${
-        safeIds.length > 1 ? "todos os agendamentos" : "este agendamento"
+      safeIds.length > 1 ? "todos os agendamentos" : "este agendamento"
       }?`
     );
     if (!confirmCancel) return;
@@ -94,35 +94,9 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
 
       toast.success(
         `${safeIds.length > 1 ? "Agendamentos" : "Agendamento"} cancelado${
-          safeIds.length > 1 ? "s" : ""
+        safeIds.length > 1 ? "s" : ""
         } com sucesso!`
       );
-
-      // Envio do push notification com as informações de cancelamento
-      const pushMessage = {
-        title: "Agendamento Cancelado",
-        message: `${user?.name ?? "Usuário desconhecido"} cancelou o agendamento de ${format(
-          bookingDate,
-          "HH:mm",
-          { locale: ptBR }
-        )} na ${barbershop.name}`,
-        userId: user?.id, // ou outro identificador do usuário, se necessário
-      };
-
-      const res2 = await fetch("/api/push/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pushMessage),
-      });
-
-      const data = await res2.json();
-      console.log("Resposta do servidor:", data);
-
-      if (res2.ok) {
-        console.log("Push enviado com sucesso!");
-      } else {
-        console.log("Erro ao enviar push: " + data.error);
-      }
 
       setIsSheetOpen(false);
       setTimeout(() => window.location.reload(), 800);
@@ -160,10 +134,10 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
                   {user?.name ?? "Cliente desconhecido"}
                 </p>
               ) : (
-                <p className="text-xs md:text-sm text-gray-300">
-                  {barbershop.name}
-                </p>
-              )}
+                  <p className="text-xs md:text-sm text-gray-300">
+                    {barbershop.name}
+                  </p>
+                )}
             </div>
 
             <div className="flex flex-col items-center justify-center border-t mt-2 pt-1">
