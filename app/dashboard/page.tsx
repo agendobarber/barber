@@ -54,7 +54,7 @@ export default async function DashboardPage() {
   const bookingsRaw = await db.booking.findMany({
     where: {
       services: { some: { service: { barbershopId } } },
-      date: { gte: startOfMonth, lte: endOfToday },
+   //   date: { gte: startOfMonth, lte: endOfToday },
     },
     include: {
       user: true,
