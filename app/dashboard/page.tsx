@@ -50,11 +50,24 @@ export default async function DashboardPage() {
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
-  // Agendamentos do mês
   const bookingsRaw = await db.booking.findMany({
     where: {
       services: { some: { service: { barbershopId } } },
-   //   date: { gte: startOfMonth, lte: endOfToday },
+      //   date: { gte: startOfMonth, lte: endOfToday },
+    },
+    include: {
+      user: true,
+      professional: true,
+      services: { include: { service: { include: { barbershop: true } } } },
+    },
+    orderBy: { date: "asc" },
+  });
+
+  // Agendamentos do mês
+  const bookingsRawMonth = await db.booking.findMany({
+    where: {
+      services: { some: { service: { barbershopId } } },
+      //   date: { gte: startOfMonth, lte: endOfToday },
     },
     include: {
       user: true,
@@ -74,7 +87,7 @@ export default async function DashboardPage() {
   });
 
   // Receita do mês (ignora cliente7@gmail.com)
-  const totalRevenueThisMonth = bookingsRaw
+  const totalRevenueThisMonth = bookingsRawMonth
     .filter((booking) => booking.status === 1 && booking.user.email !== "cliente7@gmail.com")
     .reduce((acc, booking) => {
       const totalBookingPrice = booking.services.reduce((serviceAcc, service) => {
@@ -97,10 +110,10 @@ export default async function DashboardPage() {
           : null,
         barbershop: firstService
           ? {
-              id: firstService.barbershop.id,
-              name: firstService.barbershop.name,
-              imageUrl: firstService.barbershop.imageUrl,
-            }
+            id: firstService.barbershop.id,
+            name: firstService.barbershop.name,
+            imageUrl: firstService.barbershop.imageUrl,
+          }
           : { id: "", name: "Sem barbearia", imageUrl: "" },
         services: b.services.map((s) => ({
           name: s.service.name,
@@ -124,13 +137,13 @@ export default async function DashboardPage() {
             <p className="text-3xl font-bold text-gray-700">{uniqueClients}</p>
           </div>
 
-          {/*<div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
+          <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
             <FaMoneyBillWave className="text-3xl text-green-600 mb-2" />
             <h3 className="text-lg font-semibold text-gray-800">Receita do Mês</h3>
             <p className="text-3xl font-bold text-gray-700">
               R$ {totalRevenueThisMonth.toFixed(2)}
             </p>
-          </div> */}
+          </div>
         </div>
 
         <BarberCalendar bookings={sanitizedBookings} />
