@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     });
 
     // Se for admin, cria barbearia automaticamente
-    if (role === "admin") {
+    /*if (role === "admin") {
       const barbershop = await db.barbershop.create({
         data: {
           name: `${name}'s Barbearia`,
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         where: { id: user.id },
         data: { barbershopId: barbershop.id },
       });
-    }
+    }*/
 
     return NextResponse.json({ message: "Usuário criado", userId: user.id }, { status: 201 });
   } catch (err) {

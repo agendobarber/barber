@@ -93,7 +93,7 @@ export const authOptions: AuthOptions = {
       });
 
       // Se for admin, cria barbearia automaticamente
-      if (roleFromCookie === "admin") {
+      /*if (roleFromCookie === "admin") {
         const barbershop = await db.barbershop.create({
           data: {
             name: `${user.name}'s Barbearia`,
@@ -108,7 +108,7 @@ export const authOptions: AuthOptions = {
           where: { id: user.id },
           data: { barbershopId: barbershop.id } as any,
         });
-      }
+      }*/
     },
   },
   pages: {
