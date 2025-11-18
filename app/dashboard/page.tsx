@@ -45,7 +45,7 @@ export default async function DashboardPage() {
 
   const barbershopId = user.barbershopId;
 
-  // Datas do mês atual
+  // Datas do mês atual 1
   const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
