@@ -132,10 +132,10 @@ export default async function DashboardPage() {
               R$ {totalRevenueThisMonth.toFixed(2)}
             </p>
           </div>
-        </div>
+        
         */}
-
-          <BarberCalendar bookings={sanitizedBookings} />
+        </div>
+        <BarberCalendar bookings={sanitizedBookings} />
       </main>
     </div>
   );
