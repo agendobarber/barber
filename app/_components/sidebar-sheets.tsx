@@ -10,6 +10,7 @@ import {
   StoreIcon,
   Loader2,
   UsersIcon,
+  BarChart3,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -49,6 +50,7 @@ const SidebarSheet = () => {
     { label: "Perfil", href: "/store", icon: <StoreIcon size={18} /> },
     { label: "Serviços", href: "/services", icon: <ScissorsIcon size={18} /> },
     { label: "Profissionais", href: "/professionals", icon: <UsersIcon size={18} /> },
+    { label: "Relatórios", href: "/reports", icon: <BarChart3 size={18} /> },
   ];
 
   const isActive = (href: string) => pathname === href;
