@@ -26,7 +26,6 @@ export default async function MyBookingsPage() {
   const userId = (session.user as any).id;
 
   const bookings = await db.booking.findMany({
-    where: { userId, date: { gte: new Date() } },
     include: {
       professional: true,
       services: {
