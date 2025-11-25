@@ -18,6 +18,7 @@ model User {
   sessions      Session[]
   bookings      Booking[]
   role          String      @default("user") // "user" ou "admin"
+  status        Int                    @default(1)
   barbershopId  String? // somente admins
   barbershop    Barbershop? @relation("BarbershopAdmins", fields: [barbershopId], references: [id])
   createdAt     DateTime    @default(now())
