@@ -18,7 +18,7 @@ const UsersPage = async () => {
             name: true,
             email: true,
             role: true,
-            status: true,       // <- ADICIONAR ISSO
+            status: true,       // <- ADICIONAR ISSO teste
             createdAt: true,
         },
         orderBy: { createdAt: "desc" },
