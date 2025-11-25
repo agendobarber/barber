@@ -2,10 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Header from "@/app/_components/header";
-import { FaFilePdf, FaFilter } from "react-icons/fa";
+import { FaFilter } from "react-icons/fa";
 
 export default function BarbersBookingsReport() {
-    const today = new Date().toISOString().slice(0, 10);
+    const MIN_DATE = "2025-11-01";
+
+    // Ajusta hoje para garantir que nunca fique antes do mínimo
+    const todayRaw = new Date().toISOString().slice(0, 10);
+    const today = todayRaw < MIN_DATE ? MIN_DATE : todayRaw;
 
     const [startDate, setStartDate] = useState(today);
     const [endDate, setEndDate] = useState(today);
@@ -29,10 +33,6 @@ export default function BarbersBookingsReport() {
         fetchData();
     }, []);
 
-    function generatePDF() {
-        alert("Função de PDF ainda será implementada!");
-    }
-
     return (
         <div className="min-h-screen bg-background flex flex-col text-white">
             <Header />
@@ -53,7 +53,11 @@ export default function BarbersBookingsReport() {
                             <input
                                 type="date"
                                 value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
+                                min={MIN_DATE} // AQUI DESABILITA O CALENDÁRIO ANTES DO MÍNIMO
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value >= MIN_DATE) setStartDate(value);
+                                }}
                                 className="w-full rounded-md border border-gray-600 bg-gray-800 text-white p-2"
                             />
                         </div>
@@ -64,7 +68,11 @@ export default function BarbersBookingsReport() {
                             <input
                                 type="date"
                                 value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
+                                min={MIN_DATE} // AQUI TAMBÉM BLOQUEIA
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value >= MIN_DATE) setEndDate(value);
+                                }}
                                 className="w-full rounded-md border border-gray-600 bg-gray-800 text-white p-2"
                             />
                         </div>
@@ -76,13 +84,6 @@ export default function BarbersBookingsReport() {
                                 className="flex-1 bg-blue-600 hover:bg-blue-700 transition px-4 py-2 rounded-md font-medium text-white flex items-center justify-center gap-2"
                             >
                                 <FaFilter /> Filtrar
-                            </button>
-
-                            <button
-                                onClick={generatePDF}
-                                className="flex-1 bg-red-600 hover:bg-red-700 transition px-4 py-2 rounded-md font-medium text-white flex items-center justify-center gap-2"
-                            >
-                                <FaFilePdf /> PDF
                             </button>
                         </div>
                     </div>
