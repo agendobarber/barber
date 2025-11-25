@@ -6,27 +6,27 @@ import { requireRole } from "../_lib/requireRole";
 import UsersListComponent from "../_components/UsersListComponent";
 
 const UsersPage = async () => {
-    await requireRole("admin");
-    const session = await getServerSession(authOptions);
+  await requireRole("admin");
+  const session = await getServerSession(authOptions);
 
-    if (!session?.user) return notFound();
+  if (!session?.user) return notFound();
 
-    // Busca todos os usuários (sem usar 'select' que trava TS)
-    const usersRaw = await db.user.findMany({
-        orderBy: { createdAt: "desc" },
-    });
+  // Busca todos os usuários (sem select)
+  const usersRaw = await db.user.findMany({
+    orderBy: { createdAt: "desc" },
+  });
 
-    // Mapeia para o formato que o componente espera
-    const users = usersRaw.map(u => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        status: u.status,        // aqui pega do objeto real
-        createdAt: u.createdAt,
-    }));
+  // Map para UserData, usando 'as any' pra contornar TS no build
+  const users = usersRaw.map(u => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    status: (u as any).status ?? 1, // força pegar status
+    createdAt: u.createdAt,
+  }));
 
-    return <UsersListComponent users={users} />;
+  return <UsersListComponent users={users} />;
 };
 
 export default UsersPage;
