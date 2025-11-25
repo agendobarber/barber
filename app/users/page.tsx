@@ -11,20 +11,21 @@ const UsersPage = async () => {
 
     if (!session?.user) return notFound();
 
-    // Busca TODOS os usuários
+    // Busca apenas usuários com role 'admin'
     const users = await db.user.findMany({
+        where: {
+            role: "admin", // <- filtra só admins
+        },
         select: {
             id: true,
             name: true,
             email: true,
             role: true,
-            status: true,       // <- ADICIONAR ISSO
+            status: true,
             createdAt: true,
         },
         orderBy: { createdAt: "desc" },
     });
-
-
 
     return <UsersListComponent users={users} />;
 };
