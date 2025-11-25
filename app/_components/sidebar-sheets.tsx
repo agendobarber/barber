@@ -11,6 +11,7 @@ import {
   Loader2,
   UsersIcon,
   BarChart3,
+  Users2,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -36,6 +37,8 @@ const SidebarSheet = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const email = data?.user?.email;
 
+  console.log(`E-mail, ${email}`)
+
   const handleLogoutClick = async () => {
     setIsLoggingOut(true);
     await signOut({ callbackUrl: "/" });
@@ -53,7 +56,10 @@ const SidebarSheet = () => {
     { label: "Profissionais", href: "/professionals", icon: <UsersIcon size={18} /> },
     // 👇 só adiciona relatórios se for o e-mail autorizado
     ...(email === "osvaldobnu@gmail.com"
-      ? [{ label: "Relatórios", href: "/reports", icon: <BarChart3 size={18} /> }]
+      ? [
+        { label: "Relatórios", href: "/reports", icon: <BarChart3 size={18} /> },
+        { label: "Usuários", href: "/users", icon: <Users2 size={18} /> }
+      ]
       : []),
   ];
 
