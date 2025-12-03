@@ -371,7 +371,12 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
                   locale={ptBR}
                   className="w-full text-sm"
                   // Desabilitar as datas passadas
-                  disabled={(date) => isPast(date)}
+                  disabled={(date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    return date < today; // só desabilita dias ANTES de hoje
+                  }}
                 />
               </div>
             )}
@@ -384,20 +389,20 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
                     Nenhum horário disponível para este dia.
                   </p>
                 ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {statusList.map(({ time, disabled }) => (
-                        <Button
-                          key={time}
-                          variant={selectedTimes.includes(time) ? "default" : "outline"}
-                          className={`rounded-full ${disabled ? "opacity-50" : ""}`}
-                          onClick={() => handleTimeClick(time)}
-                          disabled={disabled}
-                        >
-                          {time}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {statusList.map(({ time, disabled }) => (
+                      <Button
+                        key={time}
+                        variant={selectedTimes.includes(time) ? "default" : "outline"}
+                        className={`rounded-full ${disabled ? "opacity-50" : ""}`}
+                        onClick={() => handleTimeClick(time)}
+                        disabled={disabled}
+                      >
+                        {time}
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
