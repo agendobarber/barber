@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "./providers/auth";
-import Footer from "./_components/footer";
 import ToasterClient from "./_components/ToasterClient";
 import OneSignalClient from "./_components/OneSignalClient";
+import FooterWrapper from "./FooterWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +31,7 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+
   return (
     <html lang="pt-BR" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
@@ -38,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <OneSignalClient />
           <div className="flex min-h-screen flex-col">
             <main className="flex-1">{children}</main>
-            <Footer />
+            <FooterWrapper />
           </div>
         </AuthProvider>
         <ToasterClient />
