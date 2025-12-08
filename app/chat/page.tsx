@@ -474,7 +474,8 @@ export default function ChatPage() {
             {step !== "askService" && step !== "askProfessional" && step !== "askDate" && step !== "askHour" && (
                 <div className="p-4 bg-white border-t flex gap-2">
                     <input
-                        className="flex-1 border rounded-xl p-3 text-sm bg-gray-50 font-semibold text-gray-500"
+                        className="flex-1 border rounded-xl p-3 text-base bg-gray-50 font-semibold text-gray-700"
+                        style={{ fontSize: "16px" }}
                         placeholder="Digite sua mensagem..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
