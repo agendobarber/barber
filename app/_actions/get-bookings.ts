@@ -9,12 +9,15 @@ interface GetBookingsProps {
 }
 
 export const getBookings = async ({ date, professionalId }: GetBookingsProps) => {
+  const start = startOfDay(date);
+  const end = endOfDay(date);
+
   const bookings = await db.booking.findMany({
     where: {
       professionalId,
       date: {
-        gte: startOfDay(date),
-        lte: endOfDay(date),
+        gte: start,  // Início do dia
+        lte: end,    // Fim do dia
       },
       status: 1,
     },
@@ -28,14 +31,13 @@ export const getBookings = async ({ date, professionalId }: GetBookingsProps) =>
     },
   });
 
-  // ✅ Converter todos os Decimals antes de retornar
   const safeBookings = bookings.map((b) => ({
     ...b,
     services: b.services.map((s) => ({
       ...s,
       service: {
         ...s.service,
-        price: Number(s.service.price), // 🔥 conversão crucial
+        price: Number(s.service.price),
       },
     })),
   }));

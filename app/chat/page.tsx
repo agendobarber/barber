@@ -64,6 +64,9 @@ const getTimeStatusList = ({
 }) => {
     const availableSlots = generateProfessionalTimeSlots(professionalSchedules, selectedDay);
 
+    console.log("getTimeStatusList1");
+    console.log(availableSlots);
+
     return availableSlots.map((time) => {
         const [hour, minute] = time.split(":").map(Number);
         const current = setHours(setMinutes(new Date(selectedDay), minute), hour);
@@ -220,18 +223,32 @@ export default function ChatPage() {
         }
     };
 
-
-
-
     const loadDayBookings = async (day: Date, professionalId: string) => {
-        const res = await fetch("/api/bookings/by-day", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ date: day, professionalId }),
+        // Formatar a data para ISO string para a query string
+        const dateParam = day.toISOString();
+
+        // Fazer a requisição para a API com GET
+        const res = await fetch(`/api/bookings/by-day?date=${dateParam}&professionalId=${professionalId}`, {
+            method: "GET", // Usando GET agora
+            headers: {
+                "Content-Type": "application/json", // Cabeçalho para JSON
+            },
         });
-        const data = await res.json();
-        setDayBookings(data || []);
+
+        console.log("agendamentos");
+
+        // Verificar se a resposta foi bem-sucedida
+        if (res.ok) {
+            const data = await res.json(); // Parse da resposta JSON
+            console.log(data);
+            setDayBookings(data || []); // Atualizar estado com os dados ou lista vazia
+        } else {
+            console.error("Erro ao buscar agendamentos.");
+            setDayBookings([]); // Caso haja erro, atualizar estado com lista vazia
+        }
     };
+
+
 
     const statusList = useMemo(() => {
         if (!selectedDay) return [];
@@ -312,9 +329,9 @@ export default function ChatPage() {
             case "confirmBooking":
 
                 // Para prod
-                botSay("Agendado com sucesso! ✂️\n\nDigite *menu* para voltar ao início.");
+                /*botSay("Agendado com sucesso! ✂️\n\nDigite *menu* para voltar ao início.");
                 nextStep("finished");
-                return;
+                return;*/
 
                 if (text.toLowerCase() === "sim") {
                     if (!booking.userId) {
@@ -322,6 +339,9 @@ export default function ChatPage() {
                         nextStep("menu");
                         return;
                     }
+
+                    console.log("booking.date");
+                    console.log(booking.date);
 
                     try {
                         const response = await fetch("/api/bookings", {
@@ -353,6 +373,14 @@ export default function ChatPage() {
                     botSay("Cancelado! Digite *menu* para recomeçar.");
                     nextStep("menu");
                 }
+
+                // Limpando as variáveis de estado após o próximo passo
+                setSelectedBlocks([]); // Limpa os horários selecionados
+                setSelectedHour(""); // Limpa a hora selecionada
+                setSelectedDay(undefined); // Limpa o dia selecionado
+                setSelectedServices([]); // Limpa os serviços selecionados
+                //setBooking(); // Limpa o estado de booking, ou reinicia ele conforme necessário
+
                 break;
 
             case "finished":
@@ -653,11 +681,18 @@ export default function ChatPage() {
                                         onClick={() => {
                                             setSelectedHour(selectedBlocks[0]);
 
+                                            const [hour, minute] = selectedBlocks[0].split(":").map(Number);
+
+                                            const bookingDate = setHours(
+                                                setMinutes(new Date(selectedDay!), minute),
+                                                hour
+                                            );
+
                                             setBooking((b) => ({
                                                 ...b,
-                                                date: selectedDay!.toISOString(),
-                                                hour: selectedBlocks[0],
+                                                date: bookingDate.toISOString(),
                                             }));
+
 
                                             const profName =
                                                 professionals.find(

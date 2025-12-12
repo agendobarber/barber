@@ -5,6 +5,8 @@ export async function POST(req: Request) {
     try {
         // Recebe os dados do frontend
         const params = await req.json();
+        console.log("POST");
+        console.log(params)
 
         // Chama a função que cria o agendamento para o "usuário fantasma"
         const booking = await createBookingForGhostUser(params);
