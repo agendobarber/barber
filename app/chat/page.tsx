@@ -325,10 +325,10 @@ export default function ChatPage() {
                 break;
             case "confirmBooking":
 
-                // Para prod
-                /*botSay("Agendado com sucesso! ✂️\n\nDigite *menu* para voltar ao início.");
+                /* Para prod*/
+                botSay("Agendado com sucesso! ✂️\n\nDigite *menu* para voltar ao início.");
                 nextStep("finished");
-                return;*/
+                return;
 
                 if (text.toLowerCase() === "sim") {
                     if (!booking.userId) {
