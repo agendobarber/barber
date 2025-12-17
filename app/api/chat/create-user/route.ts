@@ -12,7 +12,8 @@ export async function POST(request: Request) {
         );
     }
 
-    const email = `phone_${phone.replace(/\D/g, "")}@noauth.chat`;
+    const normalized = phone.replace(/\D/g, "");
+    const email = `phone_${normalized}@noauth.chat`;
 
     // verifica se já existe
     let user = await db.user.findUnique({ where: { email } });

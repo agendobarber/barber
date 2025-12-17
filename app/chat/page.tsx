@@ -20,7 +20,8 @@ type Step =
     | "askDate"
     | "askHour"
     | "confirmBooking"
-    | "finished";
+    | "finished"
+    | "askPhoneForConsult";
 
 // Gera time slots de 30min
 const generateProfessionalTimeSlots = (
@@ -105,8 +106,7 @@ export default function ChatPage() {
                 "Olá! 👋 Sou o Sr. Corte.\n" +
                 "Como posso ajudar hoje?\n\n" +
                 "1️⃣ Agendar horário\n" +
-                "2️⃣ Cancelar agendamento\n" +
-                "3️⃣ Consultar meus horários",
+                "2️⃣ Consultar meus horários\n",
         },
     ]);
 
@@ -278,16 +278,13 @@ export default function ChatPage() {
         }
 
         if (option === "2") {
-            botSay("🔧 A função de *cancelar agendamento* estará disponível em breve!");
+            botSay("Claro! Para consultar seus horários, informe seu WhatsApp:");
+            nextStep("askPhoneForConsult");
             return;
         }
 
-        if (option === "3") {
-            botSay("🔧 A função de *consultar seus horários* estará disponível em breve!");
-            return;
-        }
 
-        botSay("❗ Escolha uma opção válida:\n1️⃣ Agendar horário\n2️⃣ Cancelar agendamento\n3️⃣ Consultar meus horários");
+        botSay("❗ Escolha uma opção válida:\n1️⃣ Agendar horário\n2️⃣ Consultar meus horários");
     };
 
     // -------------------- LÓGICA CHAT --------------------
@@ -386,12 +383,60 @@ export default function ChatPage() {
             case "finished":
                 if (text.toLowerCase() === "menu") {
                     botSay(
-                        "Como posso ajudar?\n\n1️⃣ Agendar horário\n2️⃣ Cancelar agendamento\n3️⃣ Consultar meus horários"
+                        "Como posso ajudar?\n\n1️⃣ Agendar horário\n2️⃣ Consultar meus horários"
                     );
                     nextStep("menu");
                 } else {
                     botSay("Digite *menu* para voltar ao início.");
                 }
+                break;
+            case "askPhoneForConsult":
+                botSay("🔍 Só um momento, estou buscando seus agendamentos...");
+
+                try {
+                    const res = await fetch(`/api/bookings/by-user?phone=${text}`);
+                    const data = await res.json();
+
+                    if (!data.bookings || data.bookings.length === 0) {
+                        botSay("😕 Não encontrei nenhum agendamento ativo vinculado a esse número.");
+                        botSay("Digite *menu* para voltar ao início.");
+                        nextStep("finished");
+                        return;
+                    }
+
+                    botSay("📆 *Seus agendamentos ativos:*");
+
+                    data.bookings.forEach((b: any) => {
+                        const profissional = b.professional ? b.professional.name : "Profissional não informado";
+
+                        const servicos = b.services
+                            .map((s: any) => s.service?.name || "")
+                            .filter(Boolean)
+                            .join(", ");
+
+                        const data = new Date(b.date).toLocaleDateString("pt-BR");
+                        const hora = new Date(b.date).toLocaleTimeString("pt-BR", {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        });
+
+                        botSay(
+                            `✂️ *Profissional:* ${profissional}\n` +
+                            `📅 *${data}* às *${hora}*\n` +
+                            `💈 *Serviços:* ${servicos}`
+                        );
+                    });
+
+
+                    botSay("\nDigite *menu* para voltar ao início.");
+                    nextStep("finished");
+
+                } catch (err) {
+                    console.error(err);
+                    botSay("❌ Erro ao consultar seus horários. Tente novamente mais tarde.");
+                    nextStep("menu");
+                }
+
                 break;
 
             default:
