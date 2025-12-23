@@ -1,82 +1,102 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+function isIOSSafari(ua: string) {
+  // iOS devices
+  const isIOS = /iphone|ipad|ipod/i.test(ua);
+  // Safari (não Chrome/Edge/Firefox em iOS, nem webviews)
+  // "CriOS" => Chrome iOS, "FxiOS" => Firefox iOS
+  const isSafariEngine = !!(ua.includes("safari") && !ua.includes("crios") && !ua.includes("fxios"));
+  return isIOS && isSafariEngine;
+}
+
+function isInAppBrowser(ua: string) {
+  // Principais webviews que quebram instalação
+  return /FBAN|FBAV|Instagram|Line\/|WhatsApp|Twitter|LinkedIn|Pinterest|WeChat|Snapchat/i.test(ua);
+}
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
-  const [triggeredByBooking, setTriggeredByBooking] = useState(false);
+  const [isSafari, setIsSafari] = useState(false);
+  const [cameFromBooking, setCameFromBooking] = useState(false);
 
+  // --------- init
   useEffect(() => {
-    const ua = window.navigator.userAgent.toLowerCase();
-    const iOS = /iphone|ipad|ipod/.test(ua);
+    const ua = navigator.userAgent.toLowerCase();
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as any).standalone;
 
+    const iOS = /iphone|ipad|ipod/i.test(ua);
     setIsIOS(iOS);
+    setIsSafari(isIOSSafari(ua));
 
-    if (standalone) return;
+    if (standalone) return; // já instalado
 
-    // Detecta se veio da criação de agendamento
     const params = new URLSearchParams(window.location.search);
-    const cameWithQuery = params.get("install") === "1";
-    const cameWithSession =
-      sessionStorage.getItem("showInstallAfterBooking") === "1";
-
-    if (cameWithQuery || cameWithSession) {
-      setTriggeredByBooking(true);
-      try {
-        sessionStorage.removeItem("showInstallAfterBooking");
-      } catch {}
+    const qInstall = params.get("install") === "1";
+    const sInstall = sessionStorage.getItem("showInstallAfterBooking") === "1";
+    if (qInstall || sInstall) {
+      setCameFromBooking(true);
+      try { sessionStorage.removeItem("showInstallAfterBooking"); } catch {}
       const url = new URL(window.location.href);
       url.searchParams.delete("install");
       window.history.replaceState({}, "", url.toString());
     }
 
-    // Android
-    const onBeforeInstallPrompt = (e: any) => {
+    const handleBIP = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowModal(true);
     };
+    window.addEventListener("beforeinstallprompt", handleBIP);
 
-    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
-
-    // iOS não tem evento → mostramos se veio do agendamento
-    if (iOS && (cameWithQuery || cameWithSession)) {
-      setShowModal(true);
-    }
+    // iOS não tem evento; se veio do agendamento, mostramos
+    if (iOS && (qInstall || sInstall)) setShowModal(true);
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", onBeforeinstallprompt);
+      window.removeEventListener("beforeinstallprompt", handleBIP);
     };
   }, []);
 
-  const onBeforeinstallprompt = () => {};
+  const ua = useMemo(() => navigator.userAgent, []);
+  const inApp = useMemo(() => isInAppBrowser(ua), [ua]);
 
+  // --------- actions
   const handleInstallClick = async () => {
-    // iOS → abre o share sheet
+    // iOS: manter minimalista
     if (isIOS) {
-      if (navigator.share) {
+      // Se estiver no Safari, tentamos abrir o share (às vezes aparece "Adicionar à Tela de Início")
+      if (isSafari && "share" in navigator) {
         try {
-          await navigator.share({
+          await (navigator as any).share({
             title: "Instalar App",
-            text: "Toque em 'Adicionar à Tela de Início'",
+            text: "Escolha 'Adicionar à Tela de Início'",
             url: window.location.href,
           });
-        } catch {}
+        } catch {
+          // silencioso — a instrução curta permanece visível
+        }
       }
+      // Se não for Safari, não adianta tentar share — deixamos a instrução na tela
       return;
     }
 
-    // Android → chama o prompt real
+    // Android: fluxo nativo
     if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.finally(() => setShowModal(false));
     }
+  };
+
+  const handleOpenInSafari = () => {
+    // Tenta abrir no Safari (quando está em webview, às vezes cai no mesmo contexto)
+    // Melhor prática: orientar o usuário a tocar no ícone "Abrir no Safari" na barra inferior/superior.
+    window.location.href = window.location.href; // força reload no mesmo URL
   };
 
   if (!showModal) return null;
@@ -84,26 +104,65 @@ export default function InstallPrompt() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl p-5 mx-4 animate-modal-enter text-center">
-        
         <h4 className="text-lg font-bold mb-2">📱 Instale o app</h4>
 
-        <p className="text-sm text-gray-600 mb-4">
-          Toque em <b>Instalar</b> e depois em <b>Adicionar à Tela de Início</b>.
-        </p>
+        {/* Mensagem minimalista */}
+        {isIOS ? (
+          <>
+            <p className="text-sm text-gray-700 mb-4">
+              Toque em <b>Instalar</b> → <b>Adicionar à Tela de Início</b>.
+            </p>
 
-        <button
-          onClick={handleInstallClick}
-          className="w-full bg-black text-white text-sm font-semibold px-4 py-3 rounded-xl"
-        >
-          Instalar
-        </button>
+            <button
+              onClick={handleInstallClick}
+              className="w-full bg-black text-white text-sm font-semibold px-4 py-3 rounded-xl"
+            >
+              Instalar
+            </button>
 
-        <button
-          onClick={() => setShowModal(false)}
-          className="w-full mt-2 text-sm text-gray-500"
-        >
-          Agora não
-        </button>
+            {/* Se estiver em webview (Instagram/WhatsApp/etc.), avise de forma curtíssima */}
+            {inApp && (
+              <p className="mt-3 text-xs text-gray-500">
+                Abra no <b>Safari</b> para instalar.
+              </p>
+            )}
+
+            {/* Se não for Safari, ofereça um toque de ação simples */}
+            {!isSafari && !inApp && (
+              <button
+                onClick={handleOpenInSafari}
+                className="w-full mt-2 text-sm text-gray-600 underline"
+              >
+                Abrir no Safari
+              </button>
+            )}
+
+            <button
+              onClick={() => setShowModal(false)}
+              className="w-full mt-2 text-sm text-gray-500"
+            >
+              Agora não
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-gray-700 mb-4">
+              Instale para receber lembretes do seu corte.
+            </p>
+            <button
+              onClick={handleInstallClick}
+              className="w-full bg-black text-white text-sm font-semibold px-4 py-3 rounded-xl"
+            >
+              Instalar
+            </button>
+            <button
+              onClick={() => setShowModal(false)}
+              className="w-full mt-2 text-sm text-gray-500"
+            >
+              Agora não
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
