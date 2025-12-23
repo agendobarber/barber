@@ -110,15 +110,8 @@ export default function InstallPrompt() {
         {isIOS ? (
           <>
             <p className="text-sm text-gray-700 mb-4">
-              Toque em <b>Instalar</b> → <b>Adicionar à Tela de Início</b>.
+              Toque em <b>Compartilhar</b> do navegador → <b>Adicionar à Tela de Início</b>.
             </p>
-
-            <button
-              onClick={handleInstallClick}
-              className="w-full bg-black text-white text-sm font-semibold px-4 py-3 rounded-xl"
-            >
-              Instalar
-            </button>
 
             {/* Se estiver em webview (Instagram/WhatsApp/etc.), avise de forma curtíssima */}
             {inApp && (
