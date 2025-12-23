@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showButton, setShowButton] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [triggeredByBooking, setTriggeredByBooking] = useState(false);
 
@@ -26,73 +26,111 @@ export default function InstallPrompt() {
     const cameWithQuery = params.get("install") === "1";
     const cameWithSession = sessionStorage.getItem("showInstallAfterBooking") === "1";
 
-    console.log("TESTE");
-
-    // Se veio com sinal, define o gatilho
     if (cameWithQuery || cameWithSession) {
       setTriggeredByBooking(true);
       // limpa a flag para não ficar mostrando toda hora
       try {
         sessionStorage.removeItem("showInstallAfterBooking");
       } catch {}
-      // remove o parâmetro da URL de forma discreta
+      // remove o parâmetro da URL discretamente
       const url = new URL(window.location.href);
       url.searchParams.delete("install");
       window.history.replaceState({}, "", url.toString());
     }
 
-    // Android: captura o evento nativo
     const onBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-
-      // Se veio por agendamento, mostra; senão, você pode optar por não mostrar aqui.
-      // Para manter simples: mostramos sempre que temos o evento
-      setShowButton(true);
+      // Mostra o modal ao capturar o evento (Android)
+      setShowModal(true);
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
 
-    // iOS: não tem evento → mostramos se veio por agendamento
-    if (iOS && triggeredByBooking) {
-      setShowButton(true);
+    // iOS não tem evento; se veio do agendamento, mostramos mesmo assim
+    if (iOS && (cameWithQuery || cameWithSession)) {
+      setShowModal(true);
     }
 
-    // fallback: se não veio por agendamento, não mostramos no iOS
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     };
-  }, [triggeredByBooking]);
+  }, []);
 
   const handleInstallClick = () => {
     if (isIOS) {
       alert(
         "Para instalar no iPhone:\n\n1) Toque no botão Compartilhar (📤)\n2) Escolha 'Adicionar à Tela de Início'"
       );
-      setShowButton(false);
+      setShowModal(false);
       return;
     }
 
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.finally(() => setShowButton(false));
+      deferredPrompt.userChoice.finally(() => setShowModal(false));
     } else {
-      // Caso raro: não temos evento no Android (ex: não atende critérios de PWA)
-      alert("Instalação não disponível agora. Verifique se seu PWA atende os requisitos.");
+      alert("Instalação não disponível agora. Verifique requisitos do PWA (manifest, HTTPS, service worker).");
     }
   };
 
-  if (!showButton) return null;
+  const handleClose = () => {
+    setShowModal(false);
+    // Opcional: persistir que o usuário fechou para não mostrar de novo por um tempo
+    // localStorage.setItem("installPromptDismissedAt", String(Date.now()));
+  };
+
+  if (!showModal) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-3 rounded-2xl shadow-lg flex items-center gap-3 z-50 animate-slide-up">
-      <span className="text-sm">📱 Instale o app para receber lembretes</span>
-      <button
-        onClick={handleInstallClick}
-        className="bg-white text-black text-xs font-semibold px-3 py-1 rounded-lg"
-      >
-        Instalar
-      </button>
+    // Backdrop + container central
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl p-5 mx-4 animate-modal-enter">
+        {/* Cabeçalho */}
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-base font-bold">📱 Instale o app</h4>
+          <button
+            onClick={handleClose}
+            aria-label="Fechar"
+            className="text-gray-500 hover:text-gray-700 transition"
+          >
+            ✖
+          </button>
+        </div>
+
+        {/* Mensagem curta */}
+        <p className="text-sm text-gray-600">
+          Instale para receber lembretes do seu corte e não perder o horário.
+        </p>
+
+        {/* Ações */}
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={handleInstallClick}
+            className="flex-1 bg-black text-white text-sm font-semibold px-4 py-2 rounded-lg"
+          >
+            Instalar
+          </button>
+          <button
+            onClick={handleClose}
+            className="flex-1 bg-gray-200 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg"
+          >
+            Agora não
+          </button>
+        </div>
+
+        {/* Dica para iOS (opcional, aparece só se for iOS) */}
+        {isIOS && (
+          <p className="mt-3 text-[12px] text-gray-500">
+            iPhone/iPad: toque em <span className="font-medium">Compartilhar (📤)</span> &rarr;{" "}
+            <span className="font-medium">Adicionar à Tela de Início</span>.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
