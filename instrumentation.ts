@@ -48,14 +48,15 @@ async function runOnce() {
   );
 }
 
+// instrumentation.ts (na raiz)
 export async function register() {
-  // Executa uma vez ao iniciar (opcional)
+  // seu código atual:
   runOnce().catch((e) => console.error('[CRON] Erro primeira execução:', e));
 
-  // Agenda: 0 e 30 entre 07 e 21 (America/Sao_Paulo)
   cron.schedule('0,30 7-21 * * *', () => {
     runOnce().catch((err) => console.error('[CRON] Erro runOnce:', err));
   }, { timezone: 'America/Sao_Paulo' });
 
   console.log('[CRON] Agendado em instrumentation.ts (App Router).');
 }
+
