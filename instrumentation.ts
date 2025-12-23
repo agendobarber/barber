@@ -48,7 +48,7 @@ async function runOnce() {
   );
 }
 
-// instrumentation.ts (na raiz)
+// instrumentation.ts (na raizs)
 export async function register() {
   // seu código atual:
   runOnce().catch((e) => console.error('[CRON] Erro primeira execução:', e));
