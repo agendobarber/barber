@@ -4,18 +4,22 @@
 import { useEffect, useMemo, useState } from "react";
 
 function isIOSSafari(ua: string) {
-  // Dispositivo iOS
   const isIOS = /iphone|ipad|ipod/i.test(ua);
-  // Safari (não Chrome/Firefox em iOS, nem webviews)
-  // "CriOS" => Chrome iOS, "FxiOS" => Firefox iOS
   const isSafariEngine = !!(ua.includes("safari") && !ua.includes("crios") && !ua.includes("fxios"));
   return isIOS && isSafariEngine;
 }
 
 function isInAppBrowser(ua: string) {
-  // Principais webviews que não oferecem "Adicionar à Tela de Início"
   return /FBAN|FBAV|Instagram|Line\/|WhatsApp|Twitter|LinkedIn|Pinterest|WeChat|Snapchat/i.test(ua);
 }
+
+function isRunningStandalone(): boolean {
+  const standaloneDisplay = window.matchMedia("(display-mode: standalone)").matches;
+  const iosStandalone = (window.navigator as any).standalone === true;
+  return standaloneDisplay || iosStandalone;
+}
+
+const DISMISS_DAYS = 7; // ajuste conforme desejar
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -23,36 +27,57 @@ export default function InstallPrompt() {
   const [isIOS, setIsIOS] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
 
+  // Marcar instalação quando rodando instalado (iOS/Android)
+  useEffect(() => {
+    if (isRunningStandalone()) {
+      try {
+        localStorage.setItem("pwaInstalled", "1");
+      } catch {}
+    }
+  }, []);
+
+  // Marcar instalação quando Chrome finalizar (Android)
+  useEffect(() => {
+    const onAppInstalled = () => {
+      try {
+        localStorage.setItem("pwaInstalled", "1");
+      } catch {}
+      setShowModal(false);
+    };
+    window.addEventListener("appinstalled", onAppInstalled);
+    return () => window.removeEventListener("appinstalled", onAppInstalled);
+  }, []);
+
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
-
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone;
-
     const iOS = /iphone|ipad|ipod/i.test(ua);
     setIsIOS(iOS);
     setIsSafari(isIOSSafari(ua));
 
-    // Se já está instalado, não mostra
-    if (standalone) return;
+    // Se já instalado ou silenciado, não mostra
+    const installed = localStorage.getItem("pwaInstalled") === "1";
+    const dismissedUntil = Number(localStorage.getItem("installPromptDismissedUntil") || 0);
+    const silenced = Date.now() < dismissedUntil;
+    if (installed || silenced) {
+      return;
+    }
 
-    // Detecta sinal para mostrar (após agendamento)
+    // Sinalização via query/sessão (após agendar)
     const params = new URLSearchParams(window.location.search);
     const qInstall = params.get("install") === "1";
     const sInstall = sessionStorage.getItem("showInstallAfterBooking") === "1";
 
+    // Sempre que consumir a flag, limpar para evitar reaparecer
     if (qInstall || sInstall) {
       try {
         sessionStorage.removeItem("showInstallAfterBooking");
       } catch {}
-      // Limpa a query da URL
       const url = new URL(window.location.href);
       url.searchParams.delete("install");
       window.history.replaceState({}, "", url.toString());
     }
 
-    // Android: captura o evento nativo
+    // Android: captura o evento nativo — mostra quando disponível
     const handleBIP = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -60,7 +85,7 @@ export default function InstallPrompt() {
     };
     window.addEventListener("beforeinstallprompt", handleBIP);
 
-    // iOS: não tem evento; se veio do agendamento, mostra
+    // iOS: sem evento; se veio sinalizado (após agendamento), mostrar
     if (iOS && (qInstall || sInstall)) {
       setShowModal(true);
     }
@@ -75,7 +100,7 @@ export default function InstallPrompt() {
 
   // Ações
   const handleInstallClick = async () => {
-    // iOS: manter minimalista — abrir share no Safari (às vezes ajuda)
+    // iOS: manter minimalista — opcionalmente abrir share no Safari
     if (isIOS) {
       if (isSafari && "share" in navigator) {
         try {
@@ -99,8 +124,18 @@ export default function InstallPrompt() {
   };
 
   const handleOpenInSafari = () => {
-    // Tenta abrir no Safari (em alguns webviews não muda o contexto)
     window.location.href = window.location.href;
+  };
+
+  const handleClose = () => {
+    // Silenciar por X dias
+    try {
+      localStorage.setItem(
+        "installPromptDismissedUntil",
+        String(Date.now() + DISMISS_DAYS * 24 * 60 * 60 * 1000)
+      );
+    } catch {}
+    setShowModal(false);
   };
 
   if (!showModal) return null;
@@ -143,7 +178,7 @@ export default function InstallPrompt() {
 
             {/* Botão fechar */}
             <button
-              onClick={() => setShowModal(false)}
+              onClick={handleClose}
               className="w-full mt-3 text-sm text-gray-500"
             >
               Agora não
@@ -168,7 +203,7 @@ export default function InstallPrompt() {
             </button>
 
             <button
-              onClick={() => setShowModal(false)}
+              onClick={handleClose}
               className="w-full mt-2 text-sm text-gray-500"
             >
               Agora não
