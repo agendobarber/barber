@@ -1,3 +1,4 @@
+
 import Header from "./_components/header";
 import { db } from "./_lib/prisma";
 import BarbershopItem from "./_components/barber-shop-item";
@@ -8,7 +9,10 @@ import { authOptions } from "./_lib/auth";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "./_components/ui/button";
-import { redirect } from "next/navigation"; // Usando o redirect do Next.js
+import { redirect } from "next/navigation";
+
+// ⬇️ importe o prompt
+import InstallPrompt from "./_components/InstallPrompt";
 
 export const dynamic = "force-dynamic";
 
@@ -17,13 +21,12 @@ export default async function Home() {
   const role = (session?.user as any)?.role;
 
   if (role === "admin") {
-    redirect("/dashboard"); // Usando o redirect do Next.js para redirecionar
+    redirect("/dashboard");
   }
 
   const isMarketplace =
     (process.env.MARKETPLACE || "").toLowerCase() === "true";
 
-  // Barbearias
   const barbershops = await db.barbershop.findMany({
     orderBy: { name: "asc" },
   });
@@ -32,23 +35,22 @@ export default async function Home() {
     (b): b is NonNullable<typeof b> => b !== null
   );
 
-  // Agendamentos
   const bookings = session?.user
     ? await db.booking.findMany({
-      where: {
-        userId: (session.user as any).id,
-        date: { gte: new Date() },
-      },
-      include: {
-        services: {
-          include: {
-            service: { include: { barbershop: true } },
-          },
+        where: {
+          userId: (session.user as any).id,
+          date: { gte: new Date() },
         },
-        professional: true,
-      },
-      orderBy: { date: "asc" },
-    })
+        include: {
+          services: {
+            include: {
+              service: { include: { barbershop: true } },
+            },
+          },
+          professional: true,
+        },
+        orderBy: { date: "asc" },
+      })
     : [];
 
   const sanitizedBookings = bookings
@@ -100,6 +102,9 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* ⬇️ Renderize o prompt aqui (topo da página) */}
+      <InstallPrompt />
+
       <Header />
 
       <div className="p-5 md:p-8 flex-1 max-w-4xl mx-auto w-full">
@@ -125,11 +130,11 @@ export default async function Home() {
               <BookingItem key={group.key} bookingGroup={group} />
             ))
           ) : (
-              <p className="text-gray-500 text-sm">Nenhum agendamento ainda.</p>
-            )}
+            <p className="text-gray-500 text-sm">Nenhum agendamento ainda.</p>
+          )}
         </div>
 
-        {/* MARKETPLACE */}
+        {/* MARKETPLACE / EXCLUSIVO */}
         {isMarketplace ? (
           <>
             <div className="mt-6">
@@ -148,40 +153,39 @@ export default async function Home() {
             </div>
           </>
         ) : (
-            /* EXCLUSIVO */
-            singleBarbershop && (
-              <div className="mt-6 flex flex-col items-center gap-4">
-                <div className="relative rounded-2xl overflow-hidden shadow-md w-full max-w-md">
-                  <Image
-                    src={singleBarbershop.imageUrl}
-                    alt={singleBarbershop.name}
-                    width={800}
-                    height={400}
-                    className="w-full h-48 object-cover"
-                    priority
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-4">
-                    <h1 className="text-white text-2xl font-semibold">
-                      {singleBarbershop.name}
-                    </h1>
-                  </div>
+          singleBarbershop && (
+            <div className="mt-6 flex flex-col items-center gap-4">
+              <div className="relative rounded-2xl overflow-hidden shadow-md w-full max-w-md">
+                <Image
+                  src={singleBarbershop.imageUrl}
+                  alt={singleBarbershop.name}
+                  width={800}
+                  height={400}
+                  className="w-full h-48 object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-4">
+                  <h1 className="text-white text-2xl font-semibold">
+                    {singleBarbershop.name}
+                  </h1>
                 </div>
-
-                <Link
-                  href={`/barbershops/${singleBarbershop.id}`}
-                  className="w-full max-w-sm"
-                >
-                  <Button className="w-full text-lg py-5 font-semibold rounded-2xl">
-                    Reservar horário
-                </Button>
-                </Link>
-
-                <p className="text-gray-400 text-sm text-center">
-                  Toque acima para escolher o melhor horário para você ✂️
-              </p>
               </div>
-            )
-          )}
+
+              <Link
+                href={`/barbershops/${singleBarbershop.id}`}
+                className="w-full max-w-sm"
+              >
+                <Button className="w-full text-lg py-5 font-semibold rounded-2xl">
+                  Reservar horário
+                </Button>
+              </Link>
+
+              <p className="text-gray-400 text-sm text-center">
+                Toque acima para escolher o melhor horário para você ✂️
+              </p>
+            </div>
+          )
+        )}
       </div>
     </div>
   );

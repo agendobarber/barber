@@ -254,25 +254,28 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
         });
         const formattedTime = selectedTimes[0]; // Usando o primeiro horário selecionado para o agendamento
 
-        const pushMessage = {
-          title: `Novo agendamento de ${customerName}!`,
-          message: `Você tem um novo agendamento com ${customerName} no dia ${formattedDate} às ${formattedTime}.`,
-          userId: userId,
-        };
+        if(session?.user?.email != "cliente7@gmail.com"){
 
-        const res = await fetch("/api/push/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(pushMessage),
-        });
+            const pushMessage = {
+            title: `Novo agendamento de ${customerName}!`,
+            message: `Você tem um novo agendamento com ${customerName} no dia ${formattedDate} às ${formattedTime}.`,
+            userId: userId,
+          };
 
-        const data = await res.json();
-        console.log("Resposta do servidor:", data);
+          const res = await fetch("/api/push/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(pushMessage),
+          });
 
-        if (res.ok) {
-          console.log("Push enviado com sucesso!");
-        } else {
-          console.log("Erro ao enviar push: " + data.error);
+          const data = await res.json();
+          console.log("Resposta do servidor:", data);
+
+          if (res.ok) {
+            console.log("Push enviado com sucesso!");
+          } else {
+            console.log("Erro ao enviar push: " + data.error);
+          }
         }
       } catch (err) {
         console.error("Erro no botão de push:", err);
@@ -288,7 +291,14 @@ const BookingButton = ({ barbershop }: BookingButtonProps) => {
       setDayBookings([]);
       setProfessionalSchedules([]);
       setProfessionalServices([]);
-      router.push(`/`);
+
+      
+        try {
+          sessionStorage.setItem("showInstallAfterBooking", "1");
+        } catch {}
+
+
+      router.push("/?install=1");
     } catch (err) {
       console.error(err);
       toast.error("❌ Erro ao criar a reserva.");
