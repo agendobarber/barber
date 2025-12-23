@@ -16,7 +16,6 @@ export async function POST(req: Request) {
     const apiKey = process.env.ONESIGNAL_REST_API_KEY;
     const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
 
-
     if (!apiKey || !appId) {
       return NextResponse.json(
         { error: "Chaves do OneSignal não configuradas" },
@@ -29,9 +28,12 @@ export async function POST(req: Request) {
       headings: { en: title },
       contents: { en: message },
       filters: [
-        { field: "tag", key: "perfil", relation: "=", value: "admin" }
+        { field: "tag", key: "userId", relation: "=", value: userId}
       ],
     };
+
+    console.log("data do push sendo enviado");
+    console.log(data);
 
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
