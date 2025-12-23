@@ -32,7 +32,7 @@ export default function InstallPrompt() {
     if (isRunningStandalone()) {
       try {
         localStorage.setItem("pwaInstalled", "1");
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -41,7 +41,7 @@ export default function InstallPrompt() {
     const onAppInstalled = () => {
       try {
         localStorage.setItem("pwaInstalled", "1");
-      } catch {}
+      } catch { }
       setShowModal(false);
     };
     window.addEventListener("appinstalled", onAppInstalled);
@@ -71,7 +71,7 @@ export default function InstallPrompt() {
     if (qInstall || sInstall) {
       try {
         sessionStorage.removeItem("showInstallAfterBooking");
-      } catch {}
+      } catch { }
       const url = new URL(window.location.href);
       url.searchParams.delete("install");
       window.history.replaceState({}, "", url.toString());
@@ -134,7 +134,7 @@ export default function InstallPrompt() {
         "installPromptDismissedUntil",
         String(Date.now() + DISMISS_DAYS * 24 * 60 * 60 * 1000)
       );
-    } catch {}
+    } catch { }
     setShowModal(false);
   };
 
@@ -156,7 +156,7 @@ export default function InstallPrompt() {
             {/* Frase curta e prática */}
             <p className="text-sm text-gray-700 mb-4">
               Toque em <b>Compartilhar</b> do navegador →{" "}
-              <b>Adicionar à Tela de Início</b>.
+              <b>Adicionar à Tela de Início</b> → <b>Aceite os termos</b>
             </p>
 
             {/* Aviso curto se estiver em webview */}
