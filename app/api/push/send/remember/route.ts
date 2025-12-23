@@ -32,9 +32,6 @@ export async function POST(req: Request) {
       ],
     };
 
-    console.log("data do push sendo enviado");
-    console.log(data);
-
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
       headers: {
