@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Badge } from "./ui/badge";
@@ -32,16 +33,41 @@ interface BookingGroup {
   status?: number; // opcional para status geral
 }
 
-interface BookingItemProps {
-  bookingGroup: BookingGroup;
+type BookingItemProps = {
+  bookingGroup: any;
   isBarber?: boolean;
-}
+  /** Controlado pelo pai (opcional). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Se true, renderiza o Card (Trigger). Se false, não renderiza Trigger. */
+  showCardTrigger?: boolean;
+};
 
-const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+const BookingItem = ({
+  bookingGroup,
+  isBarber = false,
+  open,
+  onOpenChange,
+  showCardTrigger = true,
+}: BookingItemProps) => {
+  // ---------- CONTROLE DE ABERTURA ----------
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = typeof open === "boolean";
+  const isSheetOpen = isControlled ? (open as boolean) : internalOpen;
+  const handleOpenChange = (next: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(next);
+    } else {
+      setInternalOpen(next);
+    }
+  };
+  // -----------------------------------------
+
   const [isCancelling, setIsCancelling] = useState(false);
   const { ids = [], barbershop, professional, services = [], date, user } =
     bookingGroup;
+
+  console.log("Inicio do componente web1.");
 
   if (!Array.isArray(services) || services.length === 0) return null;
 
@@ -64,6 +90,7 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
     if (status === 1 && date > new Date()) return "default";
     if (status === 1 && date <= new Date()) return "secondary";
     return "default";
+    // Você pode ajustar variantes conforme sua paleta (default, secondary, destructive).
   };
 
   const totalPrice = services.reduce((acc, s) => acc + s.price, 0);
@@ -76,8 +103,7 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
     }
 
     const confirmCancel = confirm(
-      `Tem certeza que deseja cancelar ${
-      safeIds.length > 1 ? "todos os agendamentos" : "este agendamento"
+      `Tem certeza que deseja cancelar ${safeIds.length > 1 ? "todos os agendamentos" : "este agendamento"
       }?`
     );
     if (!confirmCancel) return;
@@ -93,12 +119,11 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
       if (!res.ok) throw new Error("Erro ao cancelar agendamento");
 
       toast.success(
-        `${safeIds.length > 1 ? "Agendamentos" : "Agendamento"} cancelado${
-        safeIds.length > 1 ? "s" : ""
+        `${safeIds.length > 1 ? "Agendamentos" : "Agendamento"} cancelado${safeIds.length > 1 ? "s" : ""
         } com sucesso!`
       );
 
-      setIsSheetOpen(false);
+      handleOpenChange(false);
       setTimeout(() => window.location.reload(), 800);
     } catch (err) {
       console.error(err);
@@ -108,87 +133,96 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
     }
   };
 
+  const statusVariant = getBadgeVariant(bookingGroup.status ?? services?.[0]?.status, bookingDate);
+
+
   return (
-    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-      <SheetTrigger className="w-[210px]">
-        <Card className="w-[200px] h-[250px] flex-shrink-0">
-          <CardContent className="flex flex-col justify-between px-3 py-2 gap-1">
-            <Badge
-              className="w-fit text-xs px-2 py-0.5"
-              variant={getBadgeVariant(
-                bookingGroup.status ?? services[0].status,
-                bookingDate
-              )}
-            >
-              {bookingStatusText}
-            </Badge>
+    <Sheet open={isSheetOpen} onOpenChange={handleOpenChange}>
+      {showCardTrigger ? (
+        <SheetTrigger className="w-[210px]">
+          {/* Card-resumo */}
+          <Card className="w-[200px] h-[250px] flex-shrink-0 relative">
+            {/* Badge sobreposto DENTRO do card */}
+            <div className="absolute top-2 left-2">
+              <Badge className="text-xs px-2 py-0.5" variant={statusVariant}>
+                {bookingStatusText}
+              </Badge>
+            </div>
 
-            {/* Profissional */}
-            <p className="text-xs text-gray-400 italic mt-1">
-              Profissional: {professional?.name ?? "Não informado"}
-            </p>
+            <CardContent className="flex flex-col justify-between px-3 py-2 gap-1">
+              {/* Profissional */}
+              <p className="text-xs text-gray-400 italic mt-6">
+                {/* mt-6 para dar espaço abaixo do badge */}
+                Profissional: {professional?.name ?? "Não informado"}
+              </p>
 
-            <div className="flex items-center gap-2 mt-auto">
-              {isBarber ? (
-                <p className="text-xs md:text-sm text-gray-300">
-                  {user?.name ?? "Cliente desconhecido"}
-                </p>
-              ) : (
+              <div className="flex items-center gap-2 mt-auto">
+                {isBarber ? (
                   <p className="text-xs md:text-sm text-gray-300">
-                    {barbershop.name}
+                    {user?.name ?? "Cliente desconhecido"}
                   </p>
+                ) : (
+                  <p className="text-xs md:text-sm text-gray-300">{barbershop.name}</p>
                 )}
-            </div>
+              </div>
 
-            <div className="flex flex-col items-center justify-center border-t mt-2 pt-1">
-              <p className="text-xs md:text-sm text-gray-400">
-                {format(bookingDate, "MMMM", { locale: ptBR })}
-              </p>
-              <p className="text-lg md:text-xl font-bold leading-none">
-                {format(bookingDate, "dd", { locale: ptBR })}
-              </p>
-              <p className="text-xs md:text-sm">
-                {format(bookingDate, "HH:mm", { locale: ptBR })}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </SheetTrigger>
+              {/* Data compacta */}
+              <div className="flex flex-col items-center justify-center border-t mt-2 pt-1">
+                <p className="text-xs md:text-sm text-gray-400">
+                  {format(bookingDate, "MMMM", { locale: ptBR })}
+                </p>
+                <p className="text-lg md:text-xl font-bold leading-none">
+                  {format(bookingDate, "dd", { locale: ptBR })}
+                </p>
+                <p className="text-xs md:text-sm">{format(bookingDate, "HH:mm", { locale: ptBR })}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </SheetTrigger>
+      ) : null}
 
-      <SheetContent className="w-[90%]">
+      {/* SheetContent: não mexemos na largura do drawer; 
+          limitamos o conteúdo interno para ficar estreito */}
+      <SheetContent className="w-[90%] px-4 md:px-6">
         <SheetHeader>
           <SheetTitle>Informações da Reserva</SheetTitle>
         </SheetHeader>
 
-        <div className="mt-6">
-          <Badge
-            className="w-fit"
-            variant={getBadgeVariant(
-              bookingGroup.status ?? services[0].status,
-              bookingDate
-            )}
-          >
-            {bookingStatusText}
-          </Badge>
+        {/* CONTAINER INTERNO COM LARGURA MÁXIMA E CENTRALIZADO */}
+        <div className="mt-6 mx-auto max-w-[440px] space-y-4">
+          {/* Card detalhado; badge DENTRO dele */}
+          <Card className="shadow-sm border rounded-xl relative">
+            {/* Badge sobreposto DENTRO do card */}
+            <div className="absolute top-3 left-3">
+              <Badge className="text-xs px-2 py-0.5" variant={statusVariant}>
+                {bookingStatusText}
+              </Badge>
+            </div>
 
-          <Card className="mt-3 mb-6">
-            <CardContent className="p-3 space-y-3">
-              {services.map((service, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <h2 className="font-bold">{service.name}</h2>
-                  <p className="text-sm font-bold text-primary">
-                    {Intl.NumberFormat("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    }).format(Number(service.price))}
-                  </p>
-                </div>
-              ))}
+            <CardContent className="p-4 space-y-3">
+              {/* Espaço extra para não colidir com o badge */}
+              <div className="h-3" />
+
+              {/* Lista de serviços */}
+              <div className="space-y-2">
+                {services.map((service, index) => (
+                  <div key={index} className="flex items-center justify-between gap-4">
+                    <h2 className="font-semibold">{service.name}</h2>
+                    {/* Coluna direita com largura mínima e alinhada à direita */}
+                    <p className="text-sm font-bold text-primary min-w-[96px] text-right">
+                      {Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(Number(service.price))}
+                    </p>
+                  </div>
+                ))}
+              </div>
 
               {/* Total */}
-              <div className="flex justify-between items-center border-t pt-2">
+              <div className="border-t pt-3 flex items-center justify-between gap-4">
                 <h2 className="font-bold">Total</h2>
-                <p className="text-sm font-bold text-primary">
+                <p className="text-sm font-bold text-primary min-w-[96px] text-right">
                   {Intl.NumberFormat("pt-BR", {
                     style: "currency",
                     currency: "BRL",
@@ -196,54 +230,68 @@ const BookingItem = ({ bookingGroup, isBarber = false }: BookingItemProps) => {
                 </p>
               </div>
 
-              <div className="flex justify-between items-center">
-                <h2 className="text-sm text-gray-400">Profissional</h2>
-                <p className="text-sm text-primary">
-                  {professional?.name ?? "Não informado"}
-                </p>
-              </div>
+              {/* Metadados */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-sm text-muted-foreground">Profissional</h2>
+                  <p className="text-sm text-primary min-w-[140px] text-right">
+                    {professional?.name ?? "Não informado"}
+                  </p>
+                </div>
 
-              <div className="flex justify-between items-center">
-                <h2 className="text-sm text-gray-400">Data</h2>
-                <p className="text-sm text-primary">
-                  {format(bookingDate, "d 'de' MMMM", { locale: ptBR })}
-                </p>
-              </div>
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-sm text-muted-foreground">Data</h2>
+                  <p className="text-sm text-primary min-w-[140px] text-right">
+                    {format(bookingDate, "d 'de' MMMM", { locale: ptBR })}
+                  </p>
+                </div>
 
-              <div className="flex justify-between items-center">
-                <h2 className="text-sm text-gray-400">Horário</h2>
-                <p className="text-sm text-primary">
-                  {format(bookingDate, "HH:mm", { locale: ptBR })}
-                </p>
-              </div>
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-sm text-muted-foreground">Horário</h2>
+                  <p className="text-sm text-primary min-w-[140px] text-right">
+                    {format(bookingDate, "HH:mm", { locale: ptBR })}
+                  </p>
+                </div>
 
-              <div className="flex justify-between items-center">
-                <h2 className="text-sm text-gray-400">
-                  {isBarber ? "Cliente" : "Barbearia"}
-                </h2>
-                <p className="text-sm text-primary">
-                  {isBarber
-                    ? user?.name ?? "Cliente não identificado"
-                    : barbershop.name}
-                </p>
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-sm text-muted-foreground">{isBarber ? "Cliente" : "Barbearia"}</h2>
+                  <p className="text-sm text-primary min-w-[140px] text-right">
+                    {isBarber ? user?.name ?? "Cliente não identificado" : barbershop.name}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {bookingGroup.status === 1 && bookingDate > new Date() && (
+          {/* Ação de cancelar */}
+
+          {bookingGroup.status === 1 && bookingDate > new Date() && handleCancelBooking ? (
             <Button
-              variant="destructive"
-              className="w-full"
               onClick={handleCancelBooking}
               disabled={isCancelling}
+              className="
+      w-full 
+      bg-red-600 
+      hover:bg-red-700 
+      text-white 
+      font-semibold 
+      py-3 
+      rounded-lg 
+      transition
+      disabled:opacity-60 
+      disabled:cursor-not-allowed
+    "
             >
               {isCancelling ? "Cancelando..." : "Cancelar agendamento"}
             </Button>
-          )}
+          ) : null}
+
         </div>
       </SheetContent>
     </Sheet>
   );
-};
+}
+
+
 
 export default BookingItem;

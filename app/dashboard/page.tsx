@@ -5,6 +5,7 @@ import { authOptions } from "../_lib/auth";
 import BarberCalendar from "../_components/BarberCalendar";
 import { requireRole } from "../_lib/requireRole";
 import { FaCalendarAlt, FaUsers, FaChartLine, FaMoneyBillWave } from 'react-icons/fa';
+import ThemeToggleManual from "../_components/ThemeToggleManual";
 
 export default async function DashboardPage() {
   await requireRole("admin"); // bloqueia usuário comum
@@ -130,6 +131,11 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="flex-1 flex flex-col p-5 md:p-10">
+
+        <div className="flex items-center justify-end mb-6">
+          <ThemeToggleManual barbershopId={barbershopId} />
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
             <FaUsers className="text-3xl text-yellow-600 mb-2" />

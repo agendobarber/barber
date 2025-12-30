@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -33,14 +34,16 @@ model Barbershop {
   description String
   imageUrl    String
 
-  // 🕒 Horários de funcionamento por dia da semana
-  openHours Json? // Exemplo: { "monday": { "open": "08:00", "close": "18:00" }, ... }
+  openHours   Json? // Exemplo: { "monday": { "open": "08:00", "close": "18:00" }, ... }
 
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   services      BarbershopService[]
   admins        User[]              @relation("BarbershopAdmins")
-  professionals Professional[] // 👈 relação com os profissionais
+  professionals Professional[]
+
+  // 👇 Campo oposto do 1:1 com ThemeSetting
+  themeSetting  ThemeSetting?       @relation("BarbershopThemeSetting")
 }
 
 model Professional {
@@ -53,7 +56,7 @@ model Professional {
   barbershop   Barbershop             @relation(fields: [barbershopId], references: [id])
   bookings     Booking[]
   schedules    ProfessionalSchedule[]
-  services     BarbershopService[]    @relation("ProfessionalServices") // 👈 NOVO
+  services     BarbershopService[]    @relation("ProfessionalServices")
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
 }
@@ -77,13 +80,13 @@ model Booking {
   professionalId  String?
   professional    Professional? @relation(fields: [professionalId], references: [id])
   date            DateTime
-  durationMinutes Int           @default(30) // <-- NOVO: duração do agendamento em minutos
-  endDate         DateTime // ⏱️ horário de término do agendamento        
+  durationMinutes Int           @default(30)
+  endDate         DateTime
   status          Int           @default(1)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @default(now())
 
-  services BookingService[] // 👈 relação N:N com serviços
+  services BookingService[]
 }
 
 model Account {
@@ -135,7 +138,7 @@ model BarbershopService {
   status       Int              @default(1)
   barbershop   Barbershop       @relation(fields: [barbershopId], references: [id])
   bookingLinks BookingService[]
-  professionals Professional[]  @relation("ProfessionalServices") // 👈 NOVO
+  professionals Professional[]  @relation("ProfessionalServices")
 }
 
 model BookingService {
@@ -144,4 +147,25 @@ model BookingService {
   booking   Booking           @relation(fields: [bookingId], references: [id])
   serviceId String
   service   BarbershopService @relation(fields: [serviceId], references: [id])
+}
+
+// --- Enum do tema ---
+enum ThemeMode {
+  light
+  dark
+  system
+}
+
+// --- Tabela de tema por barbearia (1:1) ---
+model ThemeSetting {
+  id               String       @id @default(uuid())
+  barbershopId     String
+  barbershop       Barbershop   @relation("BarbershopThemeSetting", fields: [barbershopId], references: [id])
+
+  mode             ThemeMode    @default(system)
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([barbershopId])
 }

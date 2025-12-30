@@ -1,0 +1,76 @@
+
+/* app/_styles/calendar-toolbar.css */
+/* Estilos APENAS para o toolbar do react-big-calendar, escopados por .calendar-toolbar-scope */
+
+/* Container do toolbar */
+.calendar-toolbar-scope .rbc-toolbar {
+  background: var(--card);
+  color: var(--foreground);
+  font-weight: 600;
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 10px 12px;
+  margin-bottom: 8px;
+
+  border: 1px solid var(--border);
+  border-radius: 12px; /* ou calc(var(--radius) - 4px) se você tiver radius global */
+}
+
+/* Grupos de botões dentro do toolbar */
+.calendar-toolbar-scope .rbc-toolbar .rbc-btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+/* Botão padrão do toolbar */
+.calendar-toolbar-scope .rbc-btn-group button {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  padding: 8px 12px;
+  font-weight: 600;
+  line-height: 1;
+  transition: all 0.2s ease-in-out;
+
+  /* Acessibilidade */
+  outline: none;
+}
+
+/* Hover / foco visível */
+.calendar-toolbar-scope .rbc-btn-group button:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-color: var(--border);
+}
+
+.calendar-toolbar-scope .rbc-btn-group button:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+/* Estado ativo (view selecionada) — Mês / Semana / Dia / Agenda */
+.calendar-toolbar-scope .rbc-toolbar .rbc-btn-group button.rbc-active {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-color: var(--primary) !important;
+  font-weight: 700;
+}
+
+/* Label central (ex.: "dezembro 2025") */
+.calendar-toolbar-scope .rbc-toolbar .rbc-toolbar-label {
+  color: var(--foreground);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+/* Responsivo */
+@media (max-width: 640px) {
+  .calendar-toolbar-scope .rbc-toolbar { gap: 10px; }
+  .calendar-toolbar-scope .rbc-toolbar .rbc-btn-group { gap: 6px; }
+}

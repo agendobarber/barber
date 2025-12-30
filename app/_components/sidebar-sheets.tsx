@@ -37,8 +37,6 @@ const SidebarSheet = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const email = data?.user?.email;
 
-  console.log(`E-mail, ${email}`)
-
   const handleLogoutClick = async () => {
     setIsLoggingOut(true);
     await signOut({ callbackUrl: "/" });
@@ -99,7 +97,7 @@ const SidebarSheet = () => {
           </div>
         ) : (
           <div className="flex flex-col w-full gap-4">
-            <div className="flex items-center justify-between w-full">
+            {/*  <div className="flex items-center justify-between w-full">
               <h2 className="font-bold">Olá, faça seu login como cliente</h2>
               <Dialog>
                 <DialogTrigger asChild>
@@ -111,7 +109,7 @@ const SidebarSheet = () => {
                   <SignInDialog role="user" />
                 </DialogContent>
               </Dialog>
-            </div>
+            </div> */ }
             <div className="flex items-center justify-between w-full">
               <h2 className="font-bold">Olá, faça seu login como admin</h2>
               <Dialog>

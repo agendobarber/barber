@@ -1,3 +1,4 @@
+
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -5,6 +6,10 @@ import AuthProvider from "./providers/auth";
 import ToasterClient from "./_components/ToasterClient";
 import OneSignalClient from "./_components/OneSignalClient";
 import FooterWrapper from "./FooterWrapper";
+import ThemeInitScript from "./_components/ThemeInitScript";
+import "./_styles/calendar-theme.css";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./_lib/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,19 +27,24 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: "/logoOficial.png",
-    apple: "/logoOficial.png"
-  }
+    apple: "/logoOficial.png",
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0d6efd"
+  themeColor: "#0d6efd",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
 
   return (
-    <html lang="pt-BR" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {/* Versão por props (suporta barbershopId vazio sem quebrar) */}
+        <ThemeInitScript />
+
         <AuthProvider>
           <OneSignalClient />
           <div className="flex min-h-screen flex-col">
@@ -42,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <FooterWrapper />
           </div>
         </AuthProvider>
+
         <ToasterClient />
       </body>
     </html>

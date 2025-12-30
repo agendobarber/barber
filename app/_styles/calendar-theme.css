@@ -1,0 +1,129 @@
+
+/* app/_styles/calendar-theme.css */
+
+/* ===== Tema do React Big Calendar baseado nas variáveis do app ===== */
+
+.rbc-calendar {
+  background: var(--card);
+  color: var(--foreground);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 8px;
+}
+
+.rbc-toolbar {
+  background: var(--card);
+  color: var(--foreground);
+  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.rbc-btn-group button {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  transition: all 0.2s ease-in-out;
+}
+.rbc-btn-group button:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.rbc-toolbar button.rbc-active {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-color: var(--primary) !important;
+  font-weight: 700;
+}
+
+.rbc-header {
+  background: var(--card);
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+}
+
+.rbc-month-view,
+.rbc-time-view {
+  border: none;
+}
+
+.rbc-day-bg {
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+
+.rbc-off-range-bg {
+  background: var(--secondary);
+}
+
+.rbc-today {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+/* ===== cor dos eventos (neutra, combinando com claro/escuro) ===== */
+.rbc-event,
+.rbc-day-slot .rbc-event,
+.rbc-event.rbc-selected {
+  background: var(--event-active) !important;
+  color: var(--event-active-foreground) !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--border) !important;
+  padding: 6px 8px !important;
+  font-weight: 600 !important;
+}
+
+.rbc-event:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* texto */
+.rbc-date-cell,
+.rbc-day-slot .rbc-time-slot,
+.rbc-time-header-cell,
+.rbc-time-content {
+  color: var(--foreground);
+}
+
+/* overlay/popover */
+.rbc-overlay,
+.rbc-overlay-header {
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+}
+
+
+/* Dias fora do mês (off-range) */
+.rbc-off-range-bg {
+  background-color: transparent !important; /* ou use var(--background) do seu tema */
+}
+
+/* Hoje (realce) */
+.rbc-today {
+  background-color: rgba(255, 255, 255, 0.06) !important; /* ajuste para seu tema */
+}
+
+/* Fundo base da célula do mês (se quiser garantir) */
+.rbc-month-row .rbc-date-cell,
+.rbc-month-row .rbc-day-bg {
+  background-color: var(--background) !important; /* seu fundo escuro */
+}
+
+/* Texto de dias fora do mês, se quiser desativar contraste */
+.rbc-off-range {
+  color: #9aa0a6 !important; /* um cinza do seu tema */
+}
+
+/* Bordas do grid no mês (combina com seu dayPropGetter) */
+.rbc-month-view .rbc-row-bg > div,
+.rbc-month-view .rbc-header {
+  border-color: var(--border) !important;
+}

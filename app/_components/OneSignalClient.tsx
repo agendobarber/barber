@@ -19,7 +19,6 @@ export default function OneSignalClient() {
 
     // Se não houver usuário ou não houver ID, não tente inicializar o OneSignal
     if (!userId) {
-      console.log("[OneSignal] Aguardando sessão com userId...");
       return;
     }
 
@@ -27,13 +26,10 @@ export default function OneSignalClient() {
 
     // Impede múltiplas inicializações
     if (window.OneSignalInitialized || initCalled.current) {
-      console.log("[OneSignal] Já inicializado. Ignorando...");
       return;
     }
 
     initCalled.current = true;
-
-    console.log("[OneSignal] Carregando SDK...");
 
     // Carrega o script do OneSignal
     const script = document.createElement("script");
@@ -41,17 +37,13 @@ export default function OneSignalClient() {
     script.async = true;
 
     script.onload = () => {
-      console.log("[OneSignal] SDK carregado.");
 
       window.OneSignalDeferred = window.OneSignalDeferred || [];
 
       window.OneSignalDeferred.push(async (OneSignal: any) => {
         if (window.OneSignalInitialized) {
-          console.log("[OneSignal] Já estava iniciado.");
           return;
         }
-
-        console.log("[OneSignal] Inicializando OneSignal...");
 
         try {
           await OneSignal.init({
@@ -67,7 +59,6 @@ export default function OneSignalClient() {
           });
 
           window.OneSignalInitialized = true;
-          console.log("[OneSignal] Inicialização concluída.");
 
           // Adiciona a tag com o ID do usuário
           await OneSignal.User.addTag("userId", userId);
@@ -75,11 +66,7 @@ export default function OneSignalClient() {
           if(session?.user && (session.user as any).role === 'admin'){
             console.log("adicionar tag de admin")
             await OneSignal.User.addTag("perfil", "admin");
-          }
-
-          console.log("[OneSignal] Tag userId adicionada:", userId);
-
-          
+          }         
 
         } catch (error) {
           console.error("[OneSignal] Erro no init:", error);

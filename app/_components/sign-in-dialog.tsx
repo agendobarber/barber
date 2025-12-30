@@ -19,6 +19,7 @@ interface SignInDialogProps {
 
 const SignInDialog = ({ role = "user" }: SignInDialogProps) => {
   const [showError, setShowError] = useState(false);
+  const [showMessageError, setShowMessageError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", name: "" });
@@ -61,6 +62,7 @@ const SignInDialog = ({ role = "user" }: SignInDialogProps) => {
 
       if (res?.error) {
         if (res.error === "CredentialsSignin") {
+          setShowMessageError("Usuário ou senha incorretos");
           console.warn("⚠️ Usuário ou senha incorretos");
         } else {
           console.error("Erro ao fazer login:", res.error);
@@ -222,7 +224,7 @@ const SignInDialog = ({ role = "user" }: SignInDialogProps) => {
           <DialogHeader>
             <DialogTitle>Erro</DialogTitle>
             <DialogDescription>
-              Falha ao {isSigningUp ? "cadastrar" : "entrar"}.
+              {showMessageError}
             </DialogDescription>
           </DialogHeader>
           <Button onClick={() => setShowError(false)}>Fechar</Button>
