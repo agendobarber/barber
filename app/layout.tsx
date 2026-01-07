@@ -10,6 +10,7 @@ import ThemeInitScript from "./_components/ThemeInitScript";
 import "./_styles/calendar-theme.css";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./_lib/auth";
+import PWAInstallBridge from "./_components/PWAInstallBridge";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       >
         {/* Versão por props (suporta barbershopId vazio sem quebrar) */}
         <ThemeInitScript />
+
+        <PWAInstallBridge />
 
         <AuthProvider>
           <OneSignalClient />

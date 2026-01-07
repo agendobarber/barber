@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -16,65 +17,62 @@ export default function OneSignalClient() {
 
   useEffect(() => {
     const userId = session?.user && (session.user as any).id;
-
-    // Se não houver usuário ou não houver ID, não tente inicializar o OneSignal
-    if (!userId) {
-      return;
-    }
-
+    if (!userId) return;
     if (typeof window === "undefined") return;
 
-    // Impede múltiplas inicializações
-    if (window.OneSignalInitialized || initCalled.current) {
-      return;
-    }
+    const w = window as any;
 
+    // Evita múltiplos inits
+    if (w.OneSignalInitialized || initCalled.current) return;
     initCalled.current = true;
 
-    // Carrega o script do OneSignal
-    const script = document.createElement("script");
-    script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
-    script.async = true;
+    // ✅ v16: garanta o array BEFORE script
+    w.OneSignalDeferred = w.OneSignalDeferred || [];
 
-    script.onload = () => {
+    // ✅ Empurre o init já para o Deferred
+    w.OneSignalDeferred.push(async (OneSignal: any) => {
+      try {
+        await OneSignal.init({
+          appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
+          notifyButton: { enable: true },
+          serviceWorkerParam: { scope: "/" },
+          serviceWorkerPath: "OneSignalSDKWorker.js",
+          serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js",
+          subscriptionOptions: { web: { notificationIcon: "/onesignal-icon.png" } },
+          promptOptions: { slidedown: { enabled: true } },
+          // autoResubscribe: true, // opcional
+        });
 
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-
-      window.OneSignalDeferred.push(async (OneSignal: any) => {
-        if (window.OneSignalInitialized) {
-          return;
+        // ✅ (Opcional mas recomendado no user-centric v16) vincule o usuário:
+        // move o conceito de external_id para login/logout
+        if (OneSignal.login) {
+          await OneSignal.login(String(userId));
         }
 
-        try {
-          await OneSignal.init({
-            appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
-            notifyButton: { enable: true },
-            serviceWorkerParam: { scope: "/" },
-            serviceWorkerPath: "OneSignalSDKWorker.js",
-            serviceWorkerUpdaterPath: "OneSignalSDKUpdaterWorker.js",
-            subscriptionOptions: {
-              web: { notificationIcon: "/onesignal-icon.png" },
-            },
-            promptOptions: { slidedown: { enabled: true } },
-          });
-
-          window.OneSignalInitialized = true;
-
-          // Adiciona a tag com o ID do usuário
-          await OneSignal.User.addTag("userId", userId);
-
-          if(session?.user && (session.user as any).role === 'admin'){
-            console.log("adicionar tag de admin")
-            await OneSignal.User.addTag("perfil", "admin");
-          }         
-
-        } catch (error) {
-          console.error("[OneSignal] Erro no init:", error);
+        // Tags (funcionam também no v16)
+        await OneSignal.User.addTag("userId", userId);
+        if ((session?.user as any)?.role === "admin") {
+          await OneSignal.User.addTag("perfil", "admin");
         }
-      });
-    };
 
-    document.head.appendChild(script);
+        w.OneSignalInitialized = true;
+
+        // Sanidade: logue o estado real do SDK
+        console.log("[OneSignal] version:", OneSignal?.version);
+        console.log("[OneSignal] keys:", Object.keys(OneSignal || {}));
+        console.log("[OneSignal] typeof Notifications:", typeof OneSignal?.Notifications);
+      } catch (error) {
+        console.error("[OneSignal] Erro no init:", error);
+      }
+    });
+
+    // ✅ Carregue o SDK com defer (recomendação v16)
+    if (!w.OneSignal) {
+      const script = document.createElement("script");
+      script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+      script.defer = true; // melhor que async para este caso
+      document.head.appendChild(script);
+    }
   }, [session]);
 
   return null;
