@@ -8,7 +8,6 @@ import Search from "./_components/search";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./_lib/auth";
 import { redirect } from "next/navigation";
-import InstallPrompt from "./_components/InstallPrompt";
 import HomeReserveSection from "./_components/home-reserve-section";
 
 // 👇 imports usados nos cards de endereço/contato
@@ -18,6 +17,7 @@ import PhoneItem from "./_components/phone-item";
 // 👇 imports para abrir o modal de cadastro diretamente na Home
 import { Dialog, DialogContent, DialogTrigger } from "./_components/ui/dialog";
 import SignInDialog from "./_components/sign-in-dialog";
+import InstallPWA from "./_components/ui/install-pwa/InstallPWA";
 
 export const dynamic = "force-dynamic";
 
@@ -108,8 +108,8 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <InstallPrompt />
       <Header />
+      <InstallPWA />
 
       <div className="p-5 md:p-8 flex-1 max-w-4xl mx-auto w-full">
         {/* ===== CONDICIONAL ÚNICA ===== */}
