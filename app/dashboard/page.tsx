@@ -4,9 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../_lib/auth";
 import BarberCalendar from "../_components/BarberCalendar";
 import { requireRole } from "../_lib/requireRole";
-import { FaCalendarAlt, FaUsers, FaChartLine, FaMoneyBillWave } from 'react-icons/fa';
+import { FaUsers, FaMoneyBillWave } from 'react-icons/fa';
 import ThemeToggleManual from "../_components/ThemeToggleManual";
-import PushDebugAndResubscribe from "../_components/PushDebugAndResubscribe";
 
 export default async function DashboardPage() {
   await requireRole("admin"); // bloqueia usuário comum
@@ -131,7 +130,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <PushDebugAndResubscribe />
+      
 
       <main className="flex-1 flex flex-col p-5 md:p-10">
 

@@ -210,27 +210,28 @@ export default function PushDebugAndResubscribe() {
     <div className="rounded-lg border p-3 text-sm">
       <div className="flex flex-wrap gap-2">
         <button onClick={checkStatus} className="px-3 py-2 bg-gray-800 text-white rounded">
-          Ver status push
+          Ver situação das notificações
         </button>
         <button onClick={resubscribe} className="px-3 py-2 bg-blue-600 text-white rounded">
-          Reinscrever/Permitir
+          Ativar notificações novamente
         </button>
         {/* ✅ Novo botão "Baixar App" */}
         <button onClick={installAppNow} className="px-3 py-2 bg-black text-white rounded">
           Baixar App
         </button>
         {/* ✅ Copiar logs (habilitado quando houver mensagens) */}
+
         <button
           onClick={copyLogs}
           className="px-3 py-2 bg-green-600 text-white rounded disabled:opacity-50"
           disabled={log.length === 0}
           title={log.length === 0 ? "Sem mensagens para copiar" : "Copiar todas as mensagens"}
         >
-          Copiar
+          Copiar informações
         </button>
         {/* ✅ Botão para limpar logs */}
         <button onClick={clearLogs} className="px-3 py-2 bg-gray-200 text-gray-800 rounded">
-          Limpar
+          Limpar lista
         </button>
       </div>
 
