@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,75 +12,81 @@ model User {
   id            String      @id @default(cuid())
   name          String?
   email         String      @unique
+  password      String?
   emailVerified DateTime?
   image         String?
+  accounts      Account[]
+  sessions      Session[]
+  bookings      Booking[]
+  role          String      @default("user") // "user" ou "admin"
+  status        Int                    @default(1)
+  barbershopId  String? // somente admins
+  barbershop    Barbershop? @relation("BarbershopAdmins", fields: [barbershopId], references: [id])
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
-  role          String      @default("user")
-  barbershopId  String?
-  password      String?
-  status        Int         @default(1)
-  accounts      Account[]
-  bookings      Booking[]
-  sessions      Session[]
-  barbershop    Barbershop? @relation("BarbershopAdmins", fields: [barbershopId], references: [id])
 }
 
 model Barbershop {
-  id            String              @id @default(uuid())
-  name          String
-  address       String
-  phones        String[]
-  description   String
-  imageUrl      String
+  id          String   @id @default(uuid())
+  name        String
+  address     String
+  phones      String[]
+  description String
+  imageUrl    String
+
+  openHours   Json? // Exemplo: { "monday": { "open": "08:00", "close": "18:00" }, ... }
+
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
-  openHours     Json?
   services      BarbershopService[]
-  professionals Professional[]
-  themeSetting  ThemeSetting?       @relation("BarbershopThemeSetting")
   admins        User[]              @relation("BarbershopAdmins")
+  professionals Professional[]
+
+  // 👇 Campo oposto do 1:1 com ThemeSetting
+  themeSetting  ThemeSetting?       @relation("BarbershopThemeSetting")
 }
 
 model Professional {
   id           String                 @id @default(uuid())
   name         String
+  status       Int                    @default(1)
   email        String                 @unique
   phone        String?
   barbershopId String
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
-  status       Int                    @default(1)
-  bookings     Booking[]
   barbershop   Barbershop             @relation(fields: [barbershopId], references: [id])
+  bookings     Booking[]
   schedules    ProfessionalSchedule[]
   services     BarbershopService[]    @relation("ProfessionalServices")
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
 }
 
 model ProfessionalSchedule {
   id             String       @id @default(uuid())
   professionalId String
-  dayOfWeek      Int
-  startTime      String
-  endTime        String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
   professional   Professional @relation(fields: [professionalId], references: [id])
+  dayOfWeek      Int // 0 = domingo, 1 = segunda, ..., 6 = sábado
+  startTime      String // formato "HH:mm"
+  endTime        String // formato "HH:mm"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Booking {
-  id              String           @id @default(uuid())
+  id              String        @id @default(uuid())
   userId          String
-  date            DateTime
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @default(now())
-  status          Int              @default(1)
+  user            User          @relation(fields: [userId], references: [id])
   professionalId  String?
-  durationMinutes Int              @default(30)
+  professional    Professional? @relation(fields: [professionalId], references: [id])
+  date            DateTime
+  durationMinutes Int           @default(30)
   endDate         DateTime
-  professional    Professional?    @relation(fields: [professionalId], references: [id])
-  user            User             @relation(fields: [userId], references: [id])
-  services        BookingService[]
+  status          Int           @default(1)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now())
+
+  services BookingService[]
 }
 
 model Account {
@@ -94,9 +101,11 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
 }
@@ -105,9 +114,10 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now())
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }
 
 model VerificationToken {
@@ -119,51 +129,54 @@ model VerificationToken {
 }
 
 model BarbershopService {
-  id            String           @id @default(uuid())
-  name          String
-  description   String
-  price         Decimal          @db.Decimal(10, 2)
-  barbershopId  String
-  status        Int              @default(1)
-  tempo         Int              @default(0)
-  barbershop    Barbershop       @relation(fields: [barbershopId], references: [id])
-  bookingLinks  BookingService[]
-  professionals Professional[]   @relation("ProfessionalServices")
+  id           String           @id @default(uuid())
+  name         String
+  description  String
+  price        Decimal          @db.Decimal(10, 2)
+  tempo        Int              @default(0)
+  barbershopId String
+  status       Int              @default(1)
+  barbershop   Barbershop       @relation(fields: [barbershopId], references: [id])
+  bookingLinks BookingService[]
+  professionals Professional[]  @relation("ProfessionalServices")
 }
 
 model BookingService {
   id        String            @id @default(uuid())
   bookingId String
-  serviceId String
   booking   Booking           @relation(fields: [bookingId], references: [id])
+  serviceId String
   service   BarbershopService @relation(fields: [serviceId], references: [id])
 }
 
-model ThemeSetting {
-  id           String     @id @default(uuid())
-  barbershopId String     @unique
-  mode         ThemeMode  @default(system)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  barbershop   Barbershop @relation("BarbershopThemeSetting", fields: [barbershopId], references: [id])
-}
-
+// --- Enum do tema ---
 enum ThemeMode {
   light
   dark
   system
 }
 
+// --- Tabela de tema por barbearia (1:1) ---
+model ThemeSetting {
+  id               String       @id @default(uuid())
+  barbershopId     String
+  barbershop       Barbershop   @relation("BarbershopThemeSetting", fields: [barbershopId], references: [id])
 
-// prisma/schema.prisma
+  mode             ThemeMode    @default(system)
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([barbershopId])
+}
+
 model PasswordResetToken {
-  id         String   @id @default(uuid())
-  email      String
-  tokenHash  String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  email     String   @db.VarChar(255)
+  tokenHash String   @db.VarChar(64) // sha256 hex (token nunca é salvo em claro)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
   @@index([email])
-  // Se a tabela no banco tem outro nome (ex.: snake_case):
-  @@map("password_reset_tokens")
+  @@index([expiresAt])
 }
