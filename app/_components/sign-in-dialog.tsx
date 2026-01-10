@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -23,6 +24,39 @@ const SignInDialog = ({ role = "user" }: SignInDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", name: "" });
+
+  // ====== Esqueci minha senha ======
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotMessage, setForgotMessage] = useState<string | null>(null);
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotMessage(null);
+
+    try {
+      const res = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || "Não foi possível enviar o e-mail de recuperação.");
+      }
+
+      setForgotMessage(
+        "Se o e-mail existir no sistema, você receberá instruções para redefinir sua senha."
+      );
+    } catch (err: any) {
+      setForgotMessage(err?.message || "Erro ao enviar recuperação de senha.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   // ------------------------
   // Login com Google
@@ -66,6 +100,7 @@ const SignInDialog = ({ role = "user" }: SignInDialogProps) => {
           console.warn("⚠️ Usuário ou senha incorretos");
         } else {
           console.error("Erro ao fazer login:", res.error);
+          setShowMessageError("Erro ao fazer login. Tente novamente.");
         }
         setShowError(true);
         return;
@@ -75,12 +110,12 @@ const SignInDialog = ({ role = "user" }: SignInDialogProps) => {
       window.location.href = role === "admin" ? "/dashboard" : "/";
     } catch (err) {
       console.error(err);
+      setShowMessageError("Erro inesperado. Tente novamente.");
       setShowError(true);
     } finally {
       setIsLoading(false);
     }
   };
-
 
   // ------------------------
   // Cadastro e login automático
@@ -117,12 +152,14 @@ const SignInDialog = ({ role = "user" }: SignInDialogProps) => {
 
       if (loginRes?.error) {
         console.error("CredentialsSignin after signup", loginRes.error);
+        setShowMessageError("Erro ao entrar após cadastro. Tente novamente.");
         setShowError(true);
       } else {
         window.location.href = role === "admin" ? "/dashboard" : "/";
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setShowMessageError(err?.message || "Erro ao cadastrar. Tente novamente.");
       setShowError(true);
     } finally {
       setIsLoading(false);
@@ -175,7 +212,24 @@ const SignInDialog = ({ role = "user" }: SignInDialogProps) => {
             />
           </label>
 
-          <div className="mt-4">
+          {/* Link "Esqueci minha senha" – aparece somente no modo ENTRAR */}
+          {!isSigningUp && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="text-xs text-primary hover:opacity-80 underline underline-offset-4"
+                onClick={() => {
+                  setForgotOpen(true);
+                  setForgotEmail(form.email || "");
+                  setForgotMessage(null);
+                }}
+              >
+                Esqueci minha senha
+              </button>
+            </div>
+          )}
+
+          <div className="mt-2">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading
                 ? isSigningUp
@@ -210,24 +264,78 @@ const SignInDialog = ({ role = "user" }: SignInDialogProps) => {
           onClick={handleLoginWithGoogle}
           disabled={isLoading}
         >
+
+
           {isLoading ? (
             <Loader2 className="animate-spin h-5 w-5 mr-2" />
           ) : (
-            <Image src="/google.svg" width={18} height={18} alt="Google login" />
+            <span className="sr-only">Login com Google</span>
           )}
+
+
           {isLoading ? "Entrando..." : "Google"}
         </Button>
       </div>
 
+      {/* Dialog de erro genérico */}
       <Dialog open={showError} onOpenChange={setShowError}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Erro</DialogTitle>
             <DialogDescription>
-              {showMessageError}
+              {showMessageError || "Ocorreu um erro. Tente novamente."}
             </DialogDescription>
           </DialogHeader>
           <Button onClick={() => setShowError(false)}>Fechar</Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de "Esqueci minha senha" */}
+      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+        <DialogContent className="w-[90%] max-w-md">
+          <DialogHeader>
+            <DialogTitle>Recuperar senha</DialogTitle>
+            <DialogDescription>
+              Informe seu e-mail para receber o link de redefinição.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleForgotSubmit} className="space-y-3">
+            <label className="flex flex-col gap-1">
+              Email
+              <input
+                type="email"
+                required
+                className="border p-2 rounded"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+              />
+            </label>
+
+            <div className="flex items-center gap-2">
+              <Button type="submit" disabled={forgotLoading}>
+                {forgotLoading ? (
+                  <>
+                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                    Enviando...
+                  </>
+                ) : (
+                  "Enviar"
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setForgotOpen(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
+
+            {forgotMessage && (
+              <p className="text-xs text-muted-foreground">{forgotMessage}</p>
+            )}
+          </form>
         </DialogContent>
       </Dialog>
     </>
