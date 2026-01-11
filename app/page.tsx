@@ -18,6 +18,8 @@ import PhoneItem from "./_components/phone-item";
 import { Dialog, DialogContent, DialogTrigger } from "./_components/ui/dialog";
 import SignInDialog from "./_components/sign-in-dialog";
 import InstallPWA from "./_components/ui/install-pwa/InstallPWA";
+import ChatWidget from "./_components/chat-widget";
+import { userAgent } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -106,10 +108,18 @@ export default async function Home() {
       status: s.status,
     })) ?? [];
 
+  const isChatAllowed =
+    (session?.user?.email?.toLowerCase() ?? "") === "cliente7@gmail.com";
+
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <InstallPWA />
+
+      {/* ✅ Só renderiza o chat se o email for cliente7@gmail.com */}
+      {isChatAllowed && (
+        <ChatWidget userName={session?.user?.name ?? null} />
+      )}
 
       <div className="p-5 md:p-8 flex-1 max-w-4xl mx-auto w-full">
         {/* ===== CONDICIONAL ÚNICA ===== */}
