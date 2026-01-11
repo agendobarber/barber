@@ -54,7 +54,6 @@ const UsersListComponent = ({ users, barbershopId = null }: UsersListComponentPr
     router.push(`/users/${userId}/edit`);
   };
 
-  // Repassa barbershopId via query string se existir
   const goCreate = () => {
     if (barbershopId) {
       router.push(`/users/new?barbershopId=${encodeURIComponent(barbershopId)}`);
@@ -76,24 +75,28 @@ const UsersListComponent = ({ users, barbershopId = null }: UsersListComponentPr
           </Button>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg shadow-md overflow-hidden">
-          <div className="-mx-5 md:mx-0 overflow-x-auto">
-            <table className="min-w-[640px] md:min-w-full w-full text-left">
+        {/* Card: mantenha o rounded aqui, mas dê respiro no wrapper interno */}
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg shadow-md">
+          {/* Wrapper de scroll com padding lateral para evitar corte visual */}
+          <div className="overflow-x-auto px-4 md:px-6 py-2">
+            <table className="min-w-[700px] w-full text-left">
               <thead className="bg-white/10 border-b border-white/10">
                 <tr>
+                  {/* Gutter / espaçador à esquerda */}
+                  <th className="w-3 md:w-4 p-0" aria-hidden="true"></th>
+
+                  {/* Ação primeiro */}
+                  <th className="py-3 px-4 font-semibold w-[160px]">Ação</th>
                   <th className="py-3 px-4 font-semibold">Nome</th>
                   <th className="py-3 px-4 font-semibold">Email</th>
                   <th className="py-3 px-4 font-semibold hidden sm:table-cell">Criado em</th>
-                  <th className="py-3 px-4 font-semibold sticky right-0 bg-transparent z-20">
-                    Ação
-                  </th>
                 </tr>
               </thead>
 
               <tbody>
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-6 text-gray-300">
+                    <td colSpan={5} className="text-center py-6 text-gray-300">
                       Nenhum usuário encontrado.
                     </td>
                   </tr>
@@ -104,14 +107,12 @@ const UsersListComponent = ({ users, barbershopId = null }: UsersListComponentPr
 
                     return (
                       <tr key={u.id} className="hover:bg-white/5 transition">
-                        <td className="py-3 px-4 whitespace-nowrap">{u.name ?? "Sem nome"}</td>
-                        <td className="py-3 px-4 whitespace-nowrap">{u.email}</td>
-                        <td className="py-3 px-4 hidden sm:table-cell">
-                          {new Date(u.createdAt).toLocaleDateString("pt-BR")}
-                        </td>
+                        {/* Gutter */}
+                        <td className="w-3 md:w-4 p-0" aria-hidden="true"></td>
 
-                        <td className="py-3 px-4 sticky right-0 bg-transparent z-10">
-                          <div className="flex items-center justify-end md:justify-start gap-2">
+                        {/* Ação */}
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
                             {isActive ? (
                               <Button
                                 size="icon"
@@ -148,6 +149,17 @@ const UsersListComponent = ({ users, barbershopId = null }: UsersListComponentPr
                               <Pencil className="h-5 w-5" />
                             </Button>
                           </div>
+                        </td>
+
+                        {/* Nome */}
+                        <td className="py-3 px-4 whitespace-nowrap">{u.name ?? "Sem nome"}</td>
+
+                        {/* Email */}
+                        <td className="py-3 px-4 whitespace-nowrap">{u.email}</td>
+
+                        {/* Criado em */}
+                        <td className="py-3 px-4 hidden sm:table-cell">
+                          {new Date(u.createdAt).toLocaleDateString("pt-BR")}
                         </td>
                       </tr>
                     );
