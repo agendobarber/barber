@@ -6,20 +6,6 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { MessageCircle, X, Bot } from "lucide-react";
 
-/**
- * Widget flutuante de chat, estilo “atendente virtual”.
- *
- * - Botão fixo no canto inferior direito
- * - Balão “Posso ajudar?” mostrado por alguns segundos
- * - Ao clicar, abre um Dialog com iframe para /chat
- *
- * Props:
- *  - userName: nome do usuário (opcional) para personalizar o balão
- *  - iframeSrc: rota do chat (default: "/chat?embedded=1")
- *  - width/height: dimensões da janela
- *  - openByDefault: abre automaticamente ao renderizar
- *  - showWelcomeBubble: mostra/oculta o balão de convite
- */
 interface ChatWidgetProps {
   userName?: string | null;
   iframeSrc?: string;
@@ -49,13 +35,24 @@ export default function ChatWidget({
 
   return (
     <>
-      {/* Botão flutuante — canto inferior direito */}
-      <div className="fixed bottom-4 right-4 z-50">
-        {/* Balãozinho de convite */}
+      {/* Wrapper FIXO sempre no canto inferior direito */}
+      <div
+        className="
+          fixed z-50
+          flex flex-col items-end   /* <- força alinhamento do conteúdo à direita */
+          gap-2
+        "
+        style={{
+          right: "16px",
+          bottom: "calc(16px + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
+        {/* Balãozinho de convite (fica alinhado à direita do wrapper) */}
         {bubbleVisible && (
           <div
-            className="mb-2 max-w-[240px] rounded-lg border border-white/20 bg-white/90 px-3 py-2 text-sm shadow-md
+            className="max-w-[240px] rounded-lg border border-white/20 bg-white/90 px-3 py-2 text-sm shadow-md
                        dark:bg-zinc-800/90 dark:border-zinc-700/60"
+            style={{ textAlign: "left" }}  /* conteúdo do balão alinhado interno à esquerda */
           >
             <div className="flex items-start gap-2">
               <Bot className="h-4 w-4 text-primary mt-0.5" />
@@ -67,11 +64,14 @@ export default function ChatWidget({
           </div>
         )}
 
+        {/* Botão flutuante */}
         <Button
           onClick={() => setOpen(true)}
-          className="rounded-full h-12 w-12 p-0 shadow-lg
-                     bg-primary hover:bg-primary/90 text-primary-foreground
-                     dark:bg-primary dark:hover:bg-primary/90"
+          className="
+            rounded-full h-12 w-12 p-0 shadow-lg
+            bg-primary hover:bg-primary/90 text-primary-foreground
+            dark:bg-primary dark:hover:bg-primary/90
+          "
           aria-label="Abrir chat de ajuda"
           title="Abrir chat de ajuda"
         >
@@ -82,8 +82,6 @@ export default function ChatWidget({
       {/* Janela de chat */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          // Esconde QUALQUER botão filho direto do DialogContent (o padrão de close do shadcn),
-          // sem afetar nosso botão no header:
           className="
             p-0 gap-0 w-[92vw] max-w-[420px]
             [&>button]:hidden
