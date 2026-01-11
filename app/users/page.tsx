@@ -1,3 +1,4 @@
+
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { authOptions } from "../_lib/auth";
@@ -6,28 +7,40 @@ import { requireRole } from "../_lib/requireRole";
 import UsersListComponent from "../_components/UsersListComponent";
 
 const UsersPage = async () => {
-    await requireRole("admin"); // apenas admins acessam
-    const session = await getServerSession(authOptions);
+  await requireRole("admin"); // apenas admins acessam
+  const session = await getServerSession(authOptions);
 
-    if (!session?.user) return notFound();
+  if (!session?.user) return notFound();
 
-    // Busca apenas usuários com role 'admin'
-    const users = await db.user.findMany({
-        where: {
-            role: "admin", // <- filtra só admins
-        },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            status: true,
-            createdAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-    });
+  const barbershop = await db.barbershop.findFirst({
+    where: {
+      admins: {
+        some: { id: (session.user as any).id },
+      },
+    },
+    select: { id: true },
+  });
 
-    return <UsersListComponent users={users} />;
+  // Busca apenas usuários com role 'admin'
+  const users = await db.user.findMany({
+    where: { role: "admin" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return (
+    <UsersListComponent
+      users={users}
+      barbershopId={barbershop?.id ?? null} // <-- importante!
+    />
+  );
 };
 
 export default UsersPage;

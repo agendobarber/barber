@@ -17,7 +17,12 @@ interface UserData {
   createdAt: string | Date;
 }
 
-const UsersListComponent = ({ users }: { users: UserData[] }) => {
+interface UsersListComponentProps {
+  users: UserData[];
+  barbershopId?: string | null;
+}
+
+const UsersListComponent = ({ users, barbershopId = null }: UsersListComponentProps) => {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -46,8 +51,16 @@ const UsersListComponent = ({ users }: { users: UserData[] }) => {
   };
 
   const goEdit = (userId: string) => {
-    // Ajuste a URL conforme suas rotas
     router.push(`/users/${userId}/edit`);
+  };
+
+  // Repassa barbershopId via query string se existir
+  const goCreate = () => {
+    if (barbershopId) {
+      router.push(`/users/new?barbershopId=${encodeURIComponent(barbershopId)}`);
+    } else {
+      router.push("/users/new");
+    }
   };
 
   return (
@@ -55,28 +68,28 @@ const UsersListComponent = ({ users }: { users: UserData[] }) => {
       <Header />
 
       <div className="p-5 md:p-10 max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-4">Usuários</h1>
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Usuários</h1>
 
-        {/* Wrapper com scroll horizontal para telas pequenas */}
+          <Button onClick={goCreate} aria-label="Adicionar usuário" title="Adicionar usuário">
+            Novo
+          </Button>
+        </div>
+
         <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-lg shadow-md overflow-hidden">
           <div className="-mx-5 md:mx-0 overflow-x-auto">
             <table className="min-w-[640px] md:min-w-full w-full text-left">
-              {/* THEAD */}
               <thead className="bg-white/10 border-b border-white/10">
                 <tr>
                   <th className="py-3 px-4 font-semibold">Nome</th>
                   <th className="py-3 px-4 font-semibold">Email</th>
-                  <th className="py-3 px-4 font-semibold hidden sm:table-cell">
-                    Criado em
-                  </th>
-                  {/* Coluna “Ação” sticky sem fundo escuro e sem divisor */}
+                  <th className="py-3 px-4 font-semibold hidden sm:table-cell">Criado em</th>
                   <th className="py-3 px-4 font-semibold sticky right-0 bg-transparent z-20">
                     Ação
                   </th>
                 </tr>
               </thead>
 
-              {/* TBODY */}
               <tbody>
                 {users.length === 0 ? (
                   <tr>
@@ -91,20 +104,15 @@ const UsersListComponent = ({ users }: { users: UserData[] }) => {
 
                     return (
                       <tr key={u.id} className="hover:bg-white/5 transition">
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          {u.name ?? "Sem nome"}
-                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">{u.name ?? "Sem nome"}</td>
                         <td className="py-3 px-4 whitespace-nowrap">{u.email}</td>
                         <td className="py-3 px-4 hidden sm:table-cell">
                           {new Date(u.createdAt).toLocaleDateString("pt-BR")}
                         </td>
 
-                        {/* Coluna “Ação” sticky sem ofuscamento */}
                         <td className="py-3 px-4 sticky right-0 bg-transparent z-10">
                           <div className="flex items-center justify-end md:justify-start gap-2">
-                            {/* Botão Ativar/Inativar — ÍCONE APENAS */}
                             {isActive ? (
-                              // Usuário ATIVO → ação é INATIVAR (vermelho)
                               <Button
                                 size="icon"
                                 variant="destructive"
@@ -116,7 +124,6 @@ const UsersListComponent = ({ users }: { users: UserData[] }) => {
                                 <XCircle className="h-5 w-5" />
                               </Button>
                             ) : (
-                              // Usuário INATIVO → ação é ATIVAR (verde)
                               <Button
                                 size="icon"
                                 variant="default"
@@ -130,7 +137,6 @@ const UsersListComponent = ({ users }: { users: UserData[] }) => {
                               </Button>
                             )}
 
-                            {/* Botão Editar — ÍCONE APENAS */}
                             <Button
                               size="icon"
                               variant="secondary"

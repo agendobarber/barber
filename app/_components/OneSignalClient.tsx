@@ -56,11 +56,6 @@ export default function OneSignalClient() {
         }
 
         w.OneSignalInitialized = true;
-
-        // Sanidade: logue o estado real do SDK
-        console.log("[OneSignal] version:", OneSignal?.version);
-        console.log("[OneSignal] keys:", Object.keys(OneSignal || {}));
-        console.log("[OneSignal] typeof Notifications:", typeof OneSignal?.Notifications);
       } catch (error) {
         console.error("[OneSignal] Erro no init:", error);
       }

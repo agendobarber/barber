@@ -52,13 +52,9 @@ const SidebarSheet = () => {
     { label: "Perfil", href: "/store", icon: <StoreIcon size={18} /> },
     { label: "Serviços", href: "/services", icon: <ScissorsIcon size={18} /> },
     { label: "Profissionais", href: "/professionals", icon: <UsersIcon size={18} /> },
-    // 👇 só adiciona relatórios se for o e-mail autorizado
-    ...(email === "osvaldobnu@gmail.com"
-      ? [
-        { label: "Relatórios", href: "/reports", icon: <BarChart3 size={18} /> },
-        { label: "Usuários", href: "/users", icon: <Users2 size={18} /> }
-      ]
-      : []),
+    { label: "Relatórios", href: "/reports", icon: <BarChart3 size={18} /> },
+    { label: "Usuários", href: "/users", icon: <Users2 size={18} /> }
+
   ];
 
   const isActive = (href: string) => pathname === href;

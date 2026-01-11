@@ -1,4 +1,5 @@
-// app/api/auth/[...nextauth]/route.ts
+
+// app/_lib/auth.ts (ajuste o path conforme seu projeto)
 import NextAuth, { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -15,6 +16,7 @@ export const authOptions: AuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
+
     // Credentials
     CredentialsProvider({
       name: "Credentials",
@@ -27,40 +29,45 @@ export const authOptions: AuthOptions = {
 
         const user = await db.user.findUnique({
           where: { email: credentials.email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            password: true,
+            role: true,
+            status: true,
+          },
         });
 
+        // Não encontrado ou sem senha
         if (!user || !user.password) return null;
 
-        const isValid = await compare(credentials.password, user.password);
-        if (!isValid) return null;
+        // 🔒 Bloqueia se inativo
+        if (user.status !== 1) {
+          const err: any = new Error("InactiveAccount");
+          err.name = "InactiveAccount";
+          throw err; // fará com que res.error = "InactiveAccount" no client
+        }
 
-        return user;
+        const ok = await compare(credentials.password, user.password);
+        if (!ok) return null;
+
+        // Retorna o objeto user; será usado em callbacks
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          status: user.status,
+        } as any;
       },
     }),
   ],
+
   callbacks: {
-    // Session callback com JWT strategy
-    async session({ session, token }) {
-      session.user = {
-        ...session.user,
-        id: token.sub,
-        role: token.role || "user",
-      } as any;
-      return session;
-    },
-    // JWT callback para adicionar role
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = (user as any).role || "user";
-      } else {
-        // Buscar do DB se não tiver user (sessão já existente)
-        const dbUser = await db.user.findUnique({ where: { id: token.sub } });
-        token.role = dbUser?.role || "user";
-      }
-      return token;
-    },
-    // Controla login via role
+    // 🔒 Bloqueia OAuth/Google para usuários inativos
     async signIn({ user }) {
+      // role via cookie (sua regra atual)
       const roleFromDb = (user as any)?.role;
       const roleFromCookie = (await cookies()).get("next-auth-role")?.value || "user";
 
@@ -68,58 +75,88 @@ export const authOptions: AuthOptions = {
         console.warn(
           `Login negado: ${user.email} tem role=${roleFromDb}, mas tentou entrar como ${roleFromCookie}`
         );
-        throw new Error(
-          `AccessDenied&expected=${roleFromDb}&tried=${roleFromCookie}`
-        );
+        throw new Error(`AccessDenied&expected=${roleFromDb}&tried=${roleFromCookie}`);
+      }
+
+      // Checa status para todos os providers
+      // Se for credentials, 'user' já veio com status do authorize
+      // Para OAuth, precisamos buscar no DB
+      let status: number | undefined = (user as any)?.status;
+      if (status === undefined && user?.email) {
+        const dbUser = await db.user.findUnique({
+          where: { email: user.email as string },
+          select: { status: true },
+        });
+        status = dbUser?.status;
+      }
+
+      if (status !== undefined && status !== 1) {
+        // Retornar false aqui bloqueia o login OAuth
+        return false;
       }
 
       return true;
     },
+
+    // Session callback com JWT strategy
+    async session({ session, token }) {
+      session.user = {
+        ...session.user,
+        id: token.sub,
+        role: (token as any).role || "user",
+        status: (token as any).status ?? 1, // expõe status na sessão (opcional)
+      } as any;
+      return session;
+    },
+
+    // JWT callback para adicionar role/status
+    async jwt({ token, user }) {
+      if (user) {
+        // user vem do authorize (credentials) OU do adapter (oauth)
+        (token as any).role = (user as any).role || (token as any).role || "user";
+        (token as any).status = (user as any).status ?? (token as any).status ?? 1;
+      } else {
+        // Sessão existente: garante que role/status do DB estão atualizados
+        const dbUser = token.sub
+          ? await db.user.findUnique({
+              where: { id: token.sub as string },
+              select: { role: true, status: true },
+            })
+          : null;
+
+        (token as any).role = dbUser?.role || (token as any).role || "user";
+        (token as any).status = dbUser?.status ?? (token as any).status ?? 1;
+      }
+      return token;
+    },
+
     // Redirecionamento após login (credentials ou Google)
     async redirect({ url, baseUrl }) {
-      // Permite que o callbackUrl que você passou seja respeitado
       return url.startsWith(baseUrl) ? url : baseUrl;
     },
   },
+
   events: {
     async createUser({ user }) {
       // Pega role do cookie
       const roleFromCookie = (await cookies()).get("next-auth-role")?.value || "user";
 
-      // Atualiza role no DB
+      // Atualiza role no DB (sua regra existente)
       await db.user.update({
         where: { id: user.id },
         data: { role: roleFromCookie } as any,
       });
 
-      // Se for admin, cria barbearia automaticamente
-      /*if (roleFromCookie === "admin") {
-        const barbershop = await db.barbershop.create({
-          data: {
-            name: `${user.name}'s Barbearia`,
-            address: "Endereço padrão",
-            phones: [],
-            description: "Barbearia criada automaticamente",
-            imageUrl: "/default-barbershop.png",
-          },
-        });
-
-        await db.user.update({
-          where: { id: user.id },
-          data: { barbershopId: barbershop.id } as any,
-        });
-      }*/
+      // Se quiser criar barbearia automática para admin, seu bloco comentado segue podendo ser ativado
     },
   },
+
   pages: {
     error: "/auth/error",
     signIn: "/auth/signin",
   },
+
   session: {
     strategy: "jwt",
   },
 };
-
-const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };

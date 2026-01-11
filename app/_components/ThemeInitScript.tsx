@@ -30,8 +30,6 @@ export default function ThemeInitScript() {
       }
     };
 
-    console.log("tema1..")
-
     init();
     return () => {
       mounted = false;
