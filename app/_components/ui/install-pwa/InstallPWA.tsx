@@ -43,10 +43,10 @@ export default function InstallPWAAppleMinimal() {
   const { installed } = usePWADisplayMode();
   const { canPrompt, triggerInstall, installedOnce } = useInstallPrompt();
 
-  // Chaves e janela de reexibição
+  // Controle de frequência
   const LAST_DISMISS_KEY = 'pwaDismissedAt';
   const SHOW_AGAIN_AFTER_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias
-  const SHOW_DELAY_MS = 1800; // pequeno atraso para não “pular” instantaneamente
+  const SHOW_DELAY_MS = 1800; // leve atraso
 
   const [visible, setVisible] = useState(false);
 
@@ -55,12 +55,11 @@ export default function InstallPWAAppleMinimal() {
       return { isIOS: false, isSafari: false, isIOSNonSafari: false };
     }
     const ua = window.navigator.userAgent;
-    // iPad/iPhone/iPod ou iPadOS em modo desktop (MacIntel + touch)
+    // iOS/iPadOS (inclui iPadOS em modo desktop)
     const isiOSUA =
       /iPad|iPhone|iPod/.test(ua) ||
       (navigator.platform === 'MacIntel' && (navigator as any).maxTouchPoints > 1);
 
-    // Safari real (evitar Chrome/Edge/Firefox sob WebKit no iOS)
     const safariLike = /safari/i.test(ua);
     const otherEngines = /crios|fxios|edgios|opr|opios|brave/i.test(ua);
     const safari = isiOSUA && safariLike && !otherEngines;
@@ -72,7 +71,6 @@ export default function InstallPWAAppleMinimal() {
     };
   }, []);
 
-  // Regras de exibição
   useEffect(() => {
     if (installed || installedOnce) return;
 
@@ -81,12 +79,10 @@ export default function InstallPWAAppleMinimal() {
     if (!canShowByFrequency) return;
 
     const timer = setTimeout(() => {
-      // iOS: sempre mostrar (educacional), com variação Safari vs não-Safari
       if (isIOS) {
         setVisible(true);
         return;
       }
-      // Não-iOS: só se houver prompt disponível
       if (!isIOS && canPrompt) {
         setVisible(true);
       }
@@ -123,22 +119,32 @@ export default function InstallPWAAppleMinimal() {
         </p>
 
         {isSafari && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            No Safari, toque no botão{' '}
-            {/* Ícone de compartilhar com indicador de pulso em cima */}
-            <span className="relative inline-flex items-center align-middle">
-              <IOSShareIcon className="w-4 h-4 mr-1" />
-              {/* “pulso” posicionado sobre o ícone */}
-              <span
+          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+            No Safari, toque no botão <strong>Compartilhar</strong>{' '}
+            {/* Ícone DEPOIS da palavra, com seta/bounce sobre o ÍCONE */}
+            <span className="relative inline-flex items-center align-middle ml-1">
+              <IOSShareIcon className="w-4 h-4" />
+              {/* seta animada, posicionada sobre o ícone */}
+              <svg
                 className="
-                  pointer-events-none absolute -top-1 -right-2
-                  w-3 h-3 rounded-full bg-primary/40 animate-ping
+                  pointer-events-none absolute -top-3 left-1/2 -translate-x-1/2
+                  w-3.5 h-3.5 text-primary animate-bounce z-10
                 "
+                viewBox="0 0 24 24"
+                fill="none"
                 aria-hidden="true"
-              />
-            </span>
-            <strong>Compartilhar</strong> e depois{' '}
-            <strong>Adicionar à Tela de Início</strong>.
+              >
+                {/* seta apontando para baixo (minimal) */}
+                <path
+                  d="M12 6v12m0 0l-5-5m5 5l5-5"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>{' '}
+            e depois <strong>Adicionar à Tela de Início</strong>.
           </p>
         )}
 
