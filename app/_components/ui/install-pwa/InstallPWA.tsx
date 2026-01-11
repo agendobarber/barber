@@ -115,12 +115,12 @@ export default function InstallPWAAppleMinimal() {
       {/* Conteúdo */}
       <div className="flex-1">
         <p className="text-sm font-semibold text-foreground">
-          Adicionar à Tela de Início
+          Instale o App e recebe lembretes
         </p>
 
         {isSafari && (
           <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-            No Safari, toque no botão <strong>Compartilhar</strong>{' '}
+            Toque no botão <strong>Compartilhar</strong>{' '}
             {/* Ícone DEPOIS da palavra, com seta/bounce sobre o ÍCONE */}
             <span className="relative inline-flex items-center align-middle ml-1">
               <IOSShareIcon className="w-4 h-4" />
@@ -143,8 +143,9 @@ export default function InstallPWAAppleMinimal() {
                   strokeLinejoin="round"
                 />
               </svg>
-            </span>{' '}
-            e depois <strong>Adicionar à Tela de Início</strong>.
+            </span>
+            , logo abaixo do link desta página, e depois{' '}
+            <strong>Adicionar à Tela de Início</strong>.
           </p>
         )}
 
