@@ -140,11 +140,9 @@ const UsersListComponent = ({ users, barbershopId = null }: UsersListComponentPr
 
                             <Button
                               size="icon"
-                              variant="secondary"
                               onClick={() => goEdit(u.id)}
                               aria-label="Editar usuário"
                               title="Editar usuário"
-                              className="text-gray-900"
                             >
                               <Pencil className="h-5 w-5" />
                             </Button>
