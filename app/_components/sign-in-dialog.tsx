@@ -242,15 +242,22 @@ const SignInDialog = ({ role = "user" }: SignInDialogProps) => {
           </div>
         </form>
 
-        <Button
-          variant="link"
-          className="w-full"
-          onClick={() => setIsSigningUp(!isSigningUp)}
-        >
-          {isSigningUp
-            ? "Já tem uma conta? Entrar"
-            : "Ainda não tem conta? Crie seu cadastro"}
-        </Button>
+
+        {
+          role !== "admin" ? (
+
+            <Button
+              variant="link"
+              className="w-full"
+              onClick={() => setIsSigningUp(!isSigningUp)}
+            >
+              {isSigningUp
+                ? "Já tem uma conta? Entrar"
+                : "Ainda não tem conta? Crie seu cadastro"}
+            </Button>
+
+          ) : <></>
+        }
 
         <div className="flex items-center gap-2 my-2 w-full">
           <div className="flex-1 h-px bg-muted" />

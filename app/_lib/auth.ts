@@ -119,9 +119,9 @@ export const authOptions: AuthOptions = {
         // Sessão existente: garante que role/status do DB estão atualizados
         const dbUser = token.sub
           ? await db.user.findUnique({
-              where: { id: token.sub as string },
-              select: { role: true, status: true },
-            })
+            where: { id: token.sub as string },
+            select: { role: true, status: true },
+          })
           : null;
 
         (token as any).role = dbUser?.role || (token as any).role || "user";
@@ -138,15 +138,17 @@ export const authOptions: AuthOptions = {
 
   events: {
     async createUser({ user }) {
-      // Pega role do cookie
-      const roleFromCookie = (await cookies()).get("next-auth-role")?.value || "user";
+      // Pega role do cookie (para novos usuários)
+      //const roleFromCookie = (await cookies()).get("next-auth-role")?.value || "user";
+      if (user?.email) {
+        const roleFromCookie = "user";
 
-      // Atualiza role no DB (sua regra existente)
-      await db.user.update({
-        where: { id: user.id },
-        data: { role: roleFromCookie } as any,
-      });
-
+        // Atualiza role no DB (sua regra existente)
+        await db.user.update({
+          where: { id: user.id },
+          data: { role: roleFromCookie } as any,
+        });
+      }
       // Se quiser criar barbearia automática para admin, seu bloco comentado segue podendo ser ativado
     },
   },
