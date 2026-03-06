@@ -1,11 +1,13 @@
 import { createBookingForGhostUser } from "@/app/_actions/createBookingForGhostUser";
+import { authOptions } from "@/app/_lib/auth";
+import { getServerSession } from "next-auth";
 import { useSession } from "next-auth/react";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
     try {
 
-        const { data: session } = useSession();
+        const session = await getServerSession(authOptions);
 
         // Recebe os dados do frontend
         const params = await req.json();
