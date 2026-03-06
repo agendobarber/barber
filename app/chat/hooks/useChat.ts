@@ -36,9 +36,9 @@ export function useChat() {
       id: Date.now(),
       sender: "bot",
       text:
-        "Fala comigo! 👋💈\n" +
-        "Sou o assistente da barbearia e estou aqui para te ajudar a marcar seu próximo horário.\n\n" +
-        "Pode me dizer seu nome?",
+        "Olá! 👋 Sou o Sr. Corte.\n" +
+        "Como posso ajudar hoje?\n\n" +
+        "1️⃣ Agendar horário\n",
     },
   ]);
 
@@ -151,7 +151,7 @@ export function useChat() {
       return;
     }
 
-    botSay("❗ Escolha uma opção válida:\n1️⃣ Agendar horário\n2️⃣ Consultar meus horários");
+    botSay("❗ Escolha uma opção válida:\n1️⃣ Agendar horário\n");
   };
 
   // -------------------- CHAT --------------------
