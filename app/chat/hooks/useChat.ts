@@ -198,10 +198,9 @@ export function useChat() {
         setSelectedHour("");
         setSelectedDay(undefined);
         setSelectedServices([]);
-        return;
 
         // Caso queira usar a API real, remova o return acima e mantenha o bloco abaixo:
-        /*
+
         if (text.toLowerCase() === "sim") {
           if (!booking.userId) {
             botSay("Erro ao encontrar seu ID de usuário. Tente novamente.");
@@ -238,7 +237,7 @@ export function useChat() {
         setSelectedHour("");
         setSelectedDay(undefined);
         setSelectedServices([]);
-        */
+
         break;
 
       case "finished":
