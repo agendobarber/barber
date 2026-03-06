@@ -15,6 +15,7 @@ import {
   fetchBookingsByUserPhone,
 } from "../lib/api";
 import { getBarbershopId } from "../../_actions/get-barbershop-id";
+import { useSession } from "next-auth/react";
 
 export function useChat() {
   const [barbershopId, setBarbershopId] = useState<string | null>(null);
@@ -28,15 +29,16 @@ export function useChat() {
   const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
   const [selectedContiguousSlots, setSelectedContiguousSlots] = useState<string[]>([]);
 
+  const { data: session } = useSession();
+
   const [messages, setMessages] = useState([
     {
       id: Date.now(),
       sender: "bot",
       text:
-        "Olá! 👋 Sou o Sr. Corte.\n" +
-        "Como posso ajudar hoje?\n\n" +
-        "1️⃣ Agendar horário\n" +
-        "2️⃣ Consultar meus horários\n",
+        "Fala comigo! 👋💈\n" +
+        "Sou o assistente da barbearia e estou aqui para te ajudar a marcar seu próximo horário.\n\n" +
+        "Pode me dizer seu nome?",
     },
   ]);
 
@@ -64,8 +66,10 @@ export function useChat() {
 
   // Scroll automático
   useEffect(() => {
+    // ❌ Evita brigar com o calendário/slots no passo askDate
+    if (step === "askDate") return;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, step]); // <- inclui 'step' na lista
 
   const botSay = (text: string) =>
     setMessages((prev) => [...prev, { id: Date.now() + Math.random(), sender: "bot", text }]);
@@ -218,6 +222,40 @@ export function useChat() {
 
             if (ok) {
               botSay("Agendado com sucesso! ✂️\n\nDigite *menu* para voltar ao início.");
+
+              try {
+
+                const userId = session?.user && (session.user as any).id;
+                if (!userId) {
+                } else if (session?.user?.email !== "cliente7@gmail.com") {
+                  const customerName = session?.user?.name || "Cliente";
+
+                  const pushMessage = {
+                    title: `Novo agendamento de ${customerName}!`,
+                    message: `Você tem um novo agendamento feito via chat.`,
+                    userId,
+                  };
+
+                  const res = await fetch("/api/push/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(pushMessage),
+                  });
+
+                  const data = await res.json();
+                  console.log("Resposta do servidor:", data);
+
+                  if (res.ok) {
+                    console.log("Push enviado com sucesso!");
+                  } else {
+                    console.log("Erro ao enviar push: " + data.error);
+                  }
+                }
+              } catch (err) {
+                console.error("Erro no botão de push:", err);
+                console.log("Falha ao enviar push");
+              }
+
               nextStep("finished");
             } else {
               botSay("Desculpe, ocorreu um erro ao agendar seu horário. Tente novamente.");
