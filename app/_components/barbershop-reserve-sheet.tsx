@@ -242,16 +242,38 @@ export default function BarbershopReserveSheet({
       return toast.error("Selecione barbeiro, serviço e dia antes de escolher o horário.");
     }
 
-    const status = getTimeStatusList({ bookings: dayBookings, selectedDay, professionalSchedules });
+    const status = getTimeStatusList({
+      bookings: dayBookings,
+      selectedDay,
+      professionalSchedules,
+    });
+
     const clicked = status.find((s) => s.time === time);
-    if (!clicked || clicked.disabled) return toast.error("Horário indisponível.");
+    if (!clicked || clicked.disabled) {
+      return toast.error("Horário indisponível.");
+    }
 
-    const availableTimes = status.filter((t) => !t.disabled).map((t) => t.time);
-    const startIndex = availableTimes.indexOf(time);
-    const timesToSelect = availableTimes.slice(startIndex, startIndex + roundedSlots);
+    const startIndex = status.findIndex((s) => s.time === time);
+    if (startIndex === -1) {
+      return toast.error("Horário inválido.");
+    }
 
-    if (timesToSelect.length < roundedSlots) {
-      return toast.error("Não há horários suficientes disponíveis.");
+    const timesToSelect: string[] = [];
+
+    for (let i = 0; i < roundedSlots; i++) {
+      const slot = status[startIndex + i];
+
+      // não existe slot suficiente
+      if (!slot) {
+        return toast.error("Não há horários suficientes disponíveis.");
+      }
+
+      // slot existe mas está ocupado
+      if (slot.disabled) {
+        return toast.error("Não há horários suficientes disponíveis.");
+      }
+
+      timesToSelect.push(slot.time);
     }
 
     setSelectedTimes(timesToSelect);
@@ -328,7 +350,7 @@ export default function BarbershopReserveSheet({
 
       try {
         sessionStorage.setItem("showInstallAfterBooking", "1");
-      } catch {}
+      } catch { }
 
       router.push("/?install=1");
     } catch (err) {
